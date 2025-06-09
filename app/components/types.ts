@@ -10,5 +10,7 @@ export type Shift = {
 
 export type Worker = {
   name: string;
+  title: string;
+  remark: string;
   shifts: Record<Day, Shift>;
 };

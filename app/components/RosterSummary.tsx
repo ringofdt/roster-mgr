@@ -42,10 +42,16 @@ export function RosterSummary({
               <tr key={widx}>
                 <td className="border p-2 align-top">
                   <div className="font-semibold">{worker.name}</div>
+                  {worker.title && (
+                    <div className="font-medium">{worker.title}</div>
+                  )}
+                  {worker.remark && (
+                    <div className="font-light">{worker.remark}</div>
+                  )}
                   <div className="text-xs text-gray-600">
                     {weeklyHours[worker.name]
                       ? `${weeklyHours[worker.name].toFixed(1)} hrs`
-                      : "0.0 hrs"}
+                      : ""}
                   </div>
                 </td>
                 {days.map((day) => {

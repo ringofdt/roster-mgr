@@ -69,14 +69,14 @@ export default function RosterApp(): React.JSX.Element {
   const [newRole, setNewRole] = useState<string>("");
 
   const [roleList, setRoleList] = useState<string[]>([
-    "roll",
-    "roll1",
-    "roll2",
-    "nigiri",
-    "inari",
-    "inari/rice",
-    "service",
-    "closing",
+    "Roll",
+    "Roll-1",
+    "Roll-2",
+    "Nigiri",
+    "Inari",
+    "Inari/rice",
+    "Service",
+    "Closing",
   ]);
 
   const [startTimes, setStartTimes] =
@@ -85,6 +85,8 @@ export default function RosterApp(): React.JSX.Element {
     useState<Record<Day, string>>(defaultEndTimes);
 
   const [newWorkerName, setNewWorkerName] = useState<string>("");
+  const [newWorkerTitle, setNewWorkerTitle] = useState<string>("");
+  const [newWorkerRemark, setNewWorkerRemark] = useState<string>("");
   const [newWorkerDays, setNewWorkerDays] = useState<Record<Day, boolean>>(
     Object.fromEntries(days.map((d) => [d, true])) as Record<Day, boolean>,
   );
@@ -170,11 +172,6 @@ export default function RosterApp(): React.JSX.Element {
   };
 
   const addWorkerRow = () => {
-    if (!newWorkerName.trim()) {
-      alert("Please enter team member name.");
-      return;
-    }
-
     const disabledShiftData: Shift = {
       startTime: "",
       endTime: "",
@@ -196,12 +193,20 @@ export default function RosterApp(): React.JSX.Element {
       }
     });
 
-    const newWorker: Worker = { name: newWorkerName.trim(), shifts };
+    const newWorker: Worker = {
+      name: newWorkerName.trim(),
+      title: newWorkerTitle.trim(),
+      remark: newWorkerRemark.trim(),
+      shifts,
+    };
     setWorkers([...workers, newWorker]);
     setNewWorkerName("");
-    setNewWorkerDays(
-      Object.fromEntries(days.map((d) => [d, true])) as Record<Day, boolean>,
-    );
+    setNewWorkerTitle("");
+    setNewWorkerRemark("");
+
+    // setNewWorkerDays(
+    //   Object.fromEntries(days.map((d) => [d, true])) as Record<Day, boolean>,
+    // );
   };
 
   const removeWorker = (workerIndex: number) => {
@@ -319,11 +324,11 @@ export default function RosterApp(): React.JSX.Element {
     <div className="p-3 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Team Roster Manager</h1>
 
-      <div className="mb-6">
+      <div className="">
         <div className="p-2 space-y-4">
           <h2 className="font-semibold">Settings</h2>
-          <div className="flex flex-col gap-4">
-            <div className="pb-4 border-b">
+          <div className="flex flex-col gap-4 pb-4 border-b">
+            <div className="">
               <div className="flex flex-col gap-2">
                 <label className="font-semibold">Settings File</label>
                 <div className="flex gap-2 items-center">
@@ -334,7 +339,7 @@ export default function RosterApp(): React.JSX.Element {
                     <span>Save Settings</span>
                   </button>
                   <div
-                    className=" flex justify-center rounded-lg border border-dashed border-gray-900/25 px-3 py-2 hover:bg-gray-100 transition-colors"
+                    className=" flex-1 justify-center rounded-lg w-80% border border-dashed border-gray-900/25 px-3 py-2 hover:bg-gray-100 transition-colors"
                     onDrop={handleSettingsDrop}
                     onDragOver={handleSettingsDragOver}
                   >
@@ -356,7 +361,7 @@ export default function RosterApp(): React.JSX.Element {
                           className="sr-only"
                         />
                       </label>
-                      <span className="pl-1 pr-10">or drag and drop</span>
+                      <span className="pl-1">or drag and drop</span>
                     </div>
                   </div>
                 </div>
@@ -459,8 +464,8 @@ export default function RosterApp(): React.JSX.Element {
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="p-4 space-y-4">
+      <div className="">
+        <div className="p-2">
           <h2 className="font-semibold">Add New Team Member</h2>
           <div className="flex items-center gap-4 flex-wrap">
             <input
@@ -474,6 +479,20 @@ export default function RosterApp(): React.JSX.Element {
                   addWorkerRow();
                 }
               }}
+              className="border rounded px-2 py-1"
+            />
+            <input
+              type="text"
+              placeholder="Title"
+              value={newWorkerTitle}
+              onChange={(e) => setNewWorkerTitle(e.target.value)}
+              className="border rounded px-2 py-1"
+            />
+            <input
+              type="text"
+              placeholder="Remark"
+              value={newWorkerRemark}
+              onChange={(e) => setNewWorkerRemark(e.target.value)}
               className="border rounded px-2 py-1"
             />
             {days.map((day) => (
@@ -498,18 +517,18 @@ export default function RosterApp(): React.JSX.Element {
       </div>
 
       <div>
-        <div className="p-4 overflow-auto">
+        <div className="p-2 overflow-auto">
           <table className="w-full border text-sm table-fixed">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border p-2" style={{ width: "135px" }}>
+                <th className="border p-2" style={{ width: "140px" }}>
                   Team Member
                 </th>
                 {days.map((day) => (
                   <th
                     key={day}
                     className="border p-1 text-center"
-                    style={{ width: "135px" }}
+                    style={{ width: "120px" }}
                   >
                     {day}
                   </th>
@@ -520,28 +539,51 @@ export default function RosterApp(): React.JSX.Element {
               {workers.map((worker, widx) => (
                 <tr key={widx}>
                   <td className="border-r border-b p-2 align-top">
-                    <input
-                      type="text"
-                      value={worker.name}
-                      onChange={(e) =>
-                        updateWorkerField(widx, "name", e.target.value)
-                      }
-                      className="border rounded px-1 w-full"
-                    />
-                    <div className="flex items-center justify-start gap-1 pt-1 text-xs">
-                      {days.map((day) => (
-                        <label key={day} className="">
-                          <input
-                            type="checkbox"
-                            checked={worker.shifts[day]?.editable || false}
-                            onChange={() =>
-                              toggleDayForExistingWorker(widx, day)
-                            }
-                          />
-                        </label>
-                      ))}
+                    <div className="flex-1">
+                      <div className="grid gap-1">
+                        <input
+                          type="text"
+                          value={worker.name}
+                          onChange={(e) =>
+                            updateWorkerField(widx, "name", e.target.value)
+                          }
+                          className="border-b border-gray-300 px-1 w-full font-semibold"
+                          placeholder="Name"
+                        />
+                        <input
+                          type="text"
+                          value={worker.title || ""}
+                          onChange={(e) =>
+                            updateWorkerField(widx, "title", e.target.value)
+                          }
+                          className="border-b border-gray-300 px-1 w-full"
+                          placeholder="Title"
+                        />
+                        <input
+                          type="text"
+                          value={worker.remark || ""}
+                          onChange={(e) =>
+                            updateWorkerField(widx, "remark", e.target.value)
+                          }
+                          className="border-b border-gray-300 px-1 w-full"
+                          placeholder="Remark"
+                        />
+                      </div>
+                      <div className="flex items-center justify-start gap-1 pt-1 text-xs">
+                        {days.map((day) => (
+                          <label key={day} className="">
+                            <input
+                              type="checkbox"
+                              checked={worker.shifts[day]?.editable || false}
+                              onChange={() =>
+                                toggleDayForExistingWorker(widx, day)
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center text-xs pt-2">
+                    <div className="flex justify-between items-center text-xs mt-auto">
                       <span className="font-semibold">
                         {weeklyHours[worker.name]
                           ? `${weeklyHours[worker.name].toFixed(1)} hrs`
@@ -573,98 +615,113 @@ export default function RosterApp(): React.JSX.Element {
                         className="border-r border-b p-2 align-top"
                         style={{ height: "80px" }}
                       >
-                        <div className="flex gap-1 mb-1">
-                          <Select
-                            value={shift.role}
-                            onChange={(e) =>
-                              updateShift(widx, day, "role", e.target.value)
-                            }
-                            className="w-full flex-1 px-1  rounded bg-gray-100"
-                          >
-                            <option value=""></option>
-                            {roleList.map((role) => (
-                              <option key={role} value={role}>
-                                {role}
-                              </option>
-                            ))}
-                          </Select>
-                        </div>
-                        <div className="flex gap-1">
-                          <Select
-                            value={shift.startTime}
-                            onChange={(e) =>
-                              updateShift(
-                                widx,
-                                day,
-                                "startTime",
-                                e.target.value,
-                              )
-                            }
-                            className=" w-1/2  px-0"
-                          >
-                            <option value=""></option>
-                            {generateDayTimeOptions(
-                              day,
-                              startTimes,
-                              endTimes,
-                            ).map((time) => (
-                              <option key={time} value={time}>
-                                {time}
-                              </option>
-                            ))}
-                          </Select>
-                          <Select
-                            value={shift.endTime}
-                            onChange={(e) =>
-                              updateShift(widx, day, "endTime", e.target.value)
-                            }
-                            className=" w-1/2   px-0"
-                          >
-                            <option value=""></option>
-                            {generateDayTimeOptions(
-                              day,
-                              startTimes,
-                              endTimes,
-                            ).map((time) => (
-                              <option key={time} value={time}>
-                                {time}
-                              </option>
-                            ))}
-                          </Select>
-                        </div>
-
-                        <div className="flex justify-between items-center pt-2">
-                          <div className="flex gap-1 text-xs">
-                            <div className="w-9 text-right px-1 font-semibold text-gray-600">
-                              {shift.startTime && shift.endTime
-                                ? `${calculateHours(shift.startTime, shift.endTime).toFixed(1)}h`
-                                : ""}
+                        <div className="h-full flex flex-col">
+                          <div className="flex-1">
+                            <div className="grid gap-1 mb-1">
+                              <Select
+                                value={shift.role}
+                                onChange={(e) =>
+                                  updateShift(widx, day, "role", e.target.value)
+                                }
+                                className="w-full flex-1 px-0 rounded bg-gray-100"
+                              >
+                                <option value=""></option>
+                                {roleList.map((role) => (
+                                  <option key={role} value={role}>
+                                    {role}
+                                  </option>
+                                ))}
+                              </Select>
+                              <div className="flex gap-1">
+                                <div className="w-4 h-4 flex-shrink-0">
+                                  {shift.startTime === startTimes[day] && (
+                                    <div
+                                      className="w-4 h-4 text-xs text-center font-semibold text-gray-900 bg-green-500/75 rounded"
+                                      title="Opening"
+                                    >
+                                      O
+                                    </div>
+                                  )}
+                                </div>
+                                <Select
+                                  value={shift.startTime}
+                                  onChange={(e) =>
+                                    updateShift(
+                                      widx,
+                                      day,
+                                      "startTime",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full px-0"
+                                >
+                                  <option value=""></option>
+                                  {generateDayTimeOptions(
+                                    day,
+                                    startTimes,
+                                    endTimes,
+                                  ).map((time) => (
+                                    <option key={time} value={time}>
+                                      {time}
+                                    </option>
+                                  ))}
+                                </Select>
+                              </div>
+                              <div className="flex gap-1">
+                                <div className="w-4 h-4 flex-shrink-0">
+                                  {shift.endTime === endTimes[day] && (
+                                    <div
+                                      className="w-4 h-4 text-xs text-center font-semibold text-gray-900 bg-red-500/75 rounded"
+                                      title="Closing"
+                                    >
+                                      C
+                                    </div>
+                                  )}
+                                </div>
+                                <Select
+                                  value={shift.endTime}
+                                  onChange={(e) =>
+                                    updateShift(
+                                      widx,
+                                      day,
+                                      "endTime",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full px-0"
+                                >
+                                  <option value=""></option>
+                                  {generateDayTimeOptions(
+                                    day,
+                                    startTimes,
+                                    endTimes,
+                                  ).map((time) => (
+                                    <option key={time} value={time}>
+                                      {time}
+                                    </option>
+                                  ))}
+                                </Select>
+                              </div>
                             </div>
-
-                            {shift.startTime === startTimes[day] && (
-                              <div
-                                className="w-4 h-4 text-center font-semibold text-gray-900 bg-green-500/75  rounded"
-                                title="Opening"
-                              >
-                                O
-                              </div>
-                            )}
-                            {shift.endTime === endTimes[day] && (
-                              <div
-                                className="w-4 h-4 text-center font-semibold text-gray-900 bg-red-500/75 rounded"
-                                title="Closing"
-                              >
-                                C
-                              </div>
-                            )}
                           </div>
-                          <button
-                            onClick={() => resetShift(widx, day)}
-                            className="px-0.5 text-xs hover:outline border rounded cursor-pointer"
-                            title="Reset"
-                          >
-                            <ArrowPathIcon className="size-4" />
-                          </button>
+
+                          {/* Bottom row - always at the bottom */}
+                          <div className="flex justify-between items-center mt-auto">
+                            <div className="flex gap-1 text-xs">
+                              <div className="w-9 text-left px-1 font-semibold text-gray-600">
+                                {shift.startTime && shift.endTime
+                                  ? `${calculateHours(shift.startTime, shift.endTime).toFixed(1)}h`
+                                  : ""}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => resetShift(widx, day)}
+                              className="px-0.5 text-xs hover:outline border rounded cursor-pointer"
+                              title="Reset"
+                            >
+                              <ArrowPathIcon className="size-4" />
+                            </button>
+                          </div>
                         </div>
                       </td>
                     );

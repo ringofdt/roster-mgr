@@ -7,7 +7,6 @@ interface GanttChartProps {
   endTimes: Record<Day, string>;
   generateTimeOptions: (start: string, end: string) => string[];
   timeToMinutes: (time: string) => number;
-  getColor: (index: number) => string;
 }
 
 export function GanttChart({
@@ -16,9 +15,12 @@ export function GanttChart({
   endTimes,
   generateTimeOptions,
   timeToMinutes,
-  getColor,
 }: GanttChartProps) {
-  // Move gantt-related logic here
+  function getColor(index: number): string {
+    const hue = (index * 137.508) % 360;
+    return `hsl(${hue}, 65%, 75%)`;
+  }
+
   const earliestStart = Object.values(startTimes).reduce(
     (earliest, time) =>
       timeToMinutes(time) < timeToMinutes(earliest) ? time : earliest,
@@ -37,48 +39,54 @@ export function GanttChart({
   const ganttData = ganttTimes.map((time) =>
     days.map((day) => {
       const timeMinutes = timeToMinutes(time);
-      const activeWorkers: {
-        workerIndex: number;
-        workerName: string;
-        role: string;
-      }[] = [];
+      const workerStates = workers
+        .map((worker, widx) => {
+          const shift = worker.shifts[day];
+          let isActive = false;
+          let hasShiftForDay = false;
 
-      workers.forEach((worker, widx) => {
-        const shift = worker.shifts[day];
-        if (shift && shift.editable && shift.role) {
-          const startMin = timeToMinutes(shift.startTime);
-          const endMin = timeToMinutes(shift.endTime);
-          if (timeMinutes >= startMin && timeMinutes < endMin) {
-            activeWorkers.push({
-              workerIndex: widx,
-              workerName: worker.name,
-              role: shift.role,
-            });
+          if (
+            shift &&
+            shift.editable &&
+            shift.role &&
+            shift.startTime &&
+            shift.endTime
+          ) {
+            hasShiftForDay = true;
+            const startMin = timeToMinutes(shift.startTime);
+            const endMin = timeToMinutes(shift.endTime);
+            isActive = timeMinutes >= startMin && timeMinutes < endMin;
           }
-        }
-      });
 
-      return activeWorkers;
+          return {
+            workerIndex: widx,
+            workerName: worker.name,
+            role: shift?.role || "",
+            isActive,
+            hasShiftForDay,
+          };
+        })
+        .filter((worker) => worker.hasShiftForDay);
+
+      return workerStates;
     }),
   );
 
   return (
-    <div className="text-gray-800 p-4 overflow-auto">
-      <h2 className="font-semibold mb-2">
-        Gantt Chart: Team Member Time Shifts
-      </h2>
+    <div className="text-gray-700 p-4 overflow-auto">
+      <h2 className="font-semibold mb-2">Team Time Shifts</h2>
 
       {/* Legend */}
       <div className="flex flex-wrap mb-3 gap-3">
         {workers.map((worker, i) => (
           <div
             key={i}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1"
             title={worker.name}
             style={{ cursor: "default" }}
           >
             <div
-              className="w-5 h-5 rounded border text-sm text-gray-800 text-center text-middle "
+              className="w-5 h-5 rounded text-sm  text-center text-middle "
               style={{
                 backgroundColor: getColor(i),
               }}
@@ -94,11 +102,11 @@ export function GanttChart({
       <table className=" border text-xs table-fixed ">
         <thead>
           <tr className="bg-gray-100 sticky top-0">
-            <th className="border p-1 text-left sticky left-0 bg-gray-100 w-12">
+            <th className="border p-1 text-left sticky left-0 bg-gray-100 z-10 w-12">
               Time
             </th>
             {days.map((day) => (
-              <th key={day} className="border p-1 text-center w-16">
+              <th key={day} className="border p-1 text-center">
                 {day}
               </th>
             ))}
@@ -107,35 +115,37 @@ export function GanttChart({
         <tbody>
           {ganttTimes.map((time, tIdx) => (
             <tr key={time} className="hover:bg-gray-50">
-              <td className="border p-1 sticky left-0 bg-white font-semibold z-10">
+              <td className="border border-b-gray-300 p-1 sticky left-0 bg-gray-50 font-semibold z-10">
                 {time}
               </td>
               {ganttData[tIdx].map((activeWorkers, dIdx) => (
                 <td
                   key={dIdx}
-                  className="border p-0.5 align-middle"
+                  className="border-r border-b border-b-gray-300 px-1 align-middle"
                   style={{ position: "relative" }}
-                  title={
-                    activeWorkers.length > 0
-                      ? activeWorkers
-                          .map((w) => `${w.workerName} (${w.role})`)
-                          .join(", ")
-                      : ""
-                  }
+                  title={ganttData[tIdx][dIdx]
+                    .filter((w) => w.isActive)
+                    .map((w) => `${w.workerName} (${w.role})`)
+                    .join(", ")}
                 >
-                  <div className="flex content-start gap-1">
-                    {activeWorkers.map(({ workerIndex }, idx) => (
-                      <div
-                        key={idx}
-                        title={workers[workerIndex]?.name}
-                        className="w-4 h-4 border rounded text-xs text-center"
-                        style={{
-                          backgroundColor: getColor(workerIndex),
-                        }}
-                      >
-                        {workerIndex}
-                      </div>
-                    ))}
+                  <div className="flex flex-wrap gap-0.5">
+                    {ganttData[tIdx][dIdx].map(
+                      ({ workerIndex, isActive }, idx) => (
+                        <div
+                          key={idx}
+                          title={workers[workerIndex]?.name}
+                          className="w-4 h-4  rounded text-xs text-center"
+                          style={{
+                            backgroundColor: isActive
+                              ? getColor(workerIndex)
+                              : "transparent",
+                            opacity: isActive ? 1 : 0.3,
+                          }}
+                        >
+                          {isActive ? workerIndex : ""}
+                        </div>
+                      ),
+                    )}
                   </div>
                 </td>
               ))}

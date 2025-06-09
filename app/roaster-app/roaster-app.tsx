@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  Select,
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-} from "@headlessui/react";
+import { Select } from "@headlessui/react";
 import {
   ArrowPathIcon,
   XCircleIcon,
   XMarkIcon,
-  SunIcon,
-  MoonIcon,
   PlusCircleIcon,
 } from "@heroicons/react/24/solid";
 
@@ -66,11 +59,6 @@ function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
-function getColor(index: number): string {
-  const hue = (index * 137.508) % 360;
-  return `hsl(${hue}, 65%, 70%)`;
-}
-
 export default function RosterApp(): React.JSX.Element {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [weeklyHours, setWeeklyHours] = useState<Record<string, number>>({});
@@ -112,9 +100,6 @@ export default function RosterApp(): React.JSX.Element {
       timeToMinutes(time) > timeToMinutes(latest) ? time : latest,
     "00:00",
   );
-
-  const timeOptions = generateTimeOptions(earliestStart, latestEnd);
-  const ganttTimes = generateTimeOptions(earliestStart, latestEnd);
 
   const calculateHours = (start: string, end: string): number => {
     if (!start || !end) return 0;
@@ -329,36 +314,6 @@ export default function RosterApp(): React.JSX.Element {
     }
     setWorkers(updated);
   };
-
-  const ganttData: Array<
-    Array<{ workerIndex: number; workerName: string; role: string }[]>
-  > = days.map((day) =>
-    ganttTimes.map((time) => {
-      const timeMinutes = timeToMinutes(time);
-      const activeWorkers: {
-        workerIndex: number;
-        workerName: string;
-        role: string;
-      }[] = [];
-
-      workers.forEach((worker, widx) => {
-        const shift = worker.shifts[day];
-        if (shift && shift.editable && shift.role) {
-          const startMin = timeToMinutes(shift.startTime);
-          const endMin = timeToMinutes(shift.endTime);
-          if (timeMinutes >= startMin && timeMinutes < endMin) {
-            activeWorkers.push({
-              workerIndex: widx,
-              workerName: worker.name,
-              role: shift.role,
-            });
-          }
-        }
-      });
-
-      return activeWorkers;
-    }),
-  );
 
   return (
     <div className="p-3 max-w-6xl mx-auto">
@@ -738,7 +693,6 @@ export default function RosterApp(): React.JSX.Element {
         endTimes={endTimes}
         generateTimeOptions={generateTimeOptions}
         timeToMinutes={timeToMinutes}
-        getColor={getColor}
       />
 
       {/* Roster Summary Table */}

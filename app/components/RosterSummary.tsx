@@ -1,6 +1,5 @@
 import React from "react";
 import { type Worker, type Day, days } from "./types";
-import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
 
 interface RosterSummaryProps {
   workers: Worker[];
@@ -66,41 +65,43 @@ export function RosterSummary({
                       className="border p-2 align-top"
                       style={{ height: "68px" }}
                     >
-                      <div className="flex justify-between items-center gap-1 ">
-                        {shift.role && (
-                          <div className="font-medium text-sm mb-1">
-                            {shift.role}
+                      <div className="flex flex-col justify-start gap-1">
+                        <div className="flex justify-between items-center gap-1 ">
+                          {shift.role && (
+                            <div className="font-medium text-sm mb-1">
+                              {shift.role}
+                            </div>
+                          )}
+                          <div className="flex items-center text-xs gap-1">
+                            {shift.startTime === startTimes[day] && (
+                              <div
+                                className="w-4 h-4 text-center font-semibold text-gray-900 bg-green-500/75 rounded"
+                                title="Opening"
+                              >
+                                O
+                              </div>
+                            )}
+                            {shift.endTime === endTimes[day] && (
+                              <div
+                                className="w-4 h-4 text-center font-semibold text-gray-900 bg-red-500/75 rounded"
+                                title="Closing"
+                              >
+                                C
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {shift.startTime && shift.endTime && (
+                          <div className="text-xs font-semibold text-gray-600">
+                            {shift.startTime} - {shift.endTime}
                           </div>
                         )}
-                        <div className="flex items-center text-xs gap-1">
-                          {shift.startTime === startTimes[day] && (
-                            <div
-                              className="w-4 h-4 text-center font-semibold text-gray-900 bg-green-500/75 rounded"
-                              title="Opening"
-                            >
-                              O
-                            </div>
-                          )}
-                          {shift.endTime === endTimes[day] && (
-                            <div
-                              className="w-4 h-4 text-center font-semibold text-gray-900 bg-red-500/75 rounded"
-                              title="Closing"
-                            >
-                              C
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {shift.startTime && shift.endTime && (
-                        <div className="text-xs text-gray-600 mb-1">
-                          {shift.startTime} - {shift.endTime}
-                        </div>
-                      )}
 
-                      <div className="text-xs font-semibold text-gray-600">
-                        {shift.startTime && shift.endTime
-                          ? `${calculateHours(shift.startTime, shift.endTime).toFixed(1)}h`
-                          : ""}
+                        <div className="text-xs  text-gray-600">
+                          {shift.startTime && shift.endTime
+                            ? `${calculateHours(shift.startTime, shift.endTime).toFixed(1)}h`
+                            : ""}
+                        </div>
                       </div>
                     </td>
                   );

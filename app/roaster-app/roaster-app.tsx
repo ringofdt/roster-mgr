@@ -17,6 +17,12 @@ import {
 import { GanttChart } from "../components/GanttChart";
 import { RosterSummary } from "../components/RosterSummary";
 import { DailyMemoController } from "../components/DailyMemoController";
+import {
+  BadgeOpening,
+  BadgeClosing,
+  BadgePaidBreak,
+  BadgeMealBreak,
+} from "../components/Badges";
 
 const defaultStartTimes: Record<Day, string> = {
   Mon: "07:30",
@@ -167,6 +173,11 @@ export default function RosterApp(): React.JSX.Element {
     const updated = [...workers];
     if (!updated[workerIndex].shifts[day].editable) return;
     updated[workerIndex].shifts[day][field] = value;
+    const shift = updated[workerIndex].shifts[day];
+    const hrs = calculateHours(shift.startTime, shift.endTime);
+    updated[workerIndex].shifts[day]["mealBreak"] = hrs >= 5 ? "MB" : "";
+    updated[workerIndex].shifts[day]["paidBreak"] = hrs >= 4 ? "PB" : "";
+
     setWorkers(updated);
   };
 
@@ -177,6 +188,8 @@ export default function RosterApp(): React.JSX.Element {
       startTime: "",
       endTime: "",
       role: "",
+      paidBreak: "",
+      mealBreak: "",
       editable: true,
     };
     setWorkers(updated);
@@ -191,6 +204,8 @@ export default function RosterApp(): React.JSX.Element {
       startTime: "",
       endTime: "",
       role: "",
+      paidBreak: "",
+      mealBreak: "",
       editable: false,
     };
     const shifts: Record<Day, Shift> = {} as Record<Day, Shift>;
@@ -201,6 +216,8 @@ export default function RosterApp(): React.JSX.Element {
           startTime: "",
           endTime: "",
           role: "",
+          paidBreak: "",
+          mealBreak: "",
           editable: true,
         };
       } else {
@@ -325,6 +342,8 @@ export default function RosterApp(): React.JSX.Element {
         startTime: "",
         endTime: "",
         role: "",
+        paidBreak: "",
+        mealBreak: "",
         editable: false,
       };
     } else {
@@ -332,6 +351,8 @@ export default function RosterApp(): React.JSX.Element {
         startTime: "",
         endTime: "",
         role: "",
+        paidBreak: "",
+        mealBreak: "",
         editable: true,
       };
     }
@@ -541,14 +562,11 @@ export default function RosterApp(): React.JSX.Element {
           <table className="w-full border-0 text-sm table-fixed">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border-0 p-2" style={{ width: "140px" }}>
-                  Team Member
-                </th>
+                <th className="border-0 p-2 w-[150px]">Team Member</th>
                 {days.map((day) => (
                   <th
                     key={day}
                     className="border-l border-gray-400 p-1 text-center"
-                    style={{ width: "120px" }}
                   >
                     {day}
                   </th>
@@ -589,7 +607,7 @@ export default function RosterApp(): React.JSX.Element {
                           placeholder="Remark"
                         />
                       </div>
-                      <div className="flex items-center justify-start gap-1 pt-1 text-xs">
+                      <div className="flex items-center justify-start gap-1 py-2 text-xs">
                         {days.map((day) => (
                           <label key={day} className="">
                             <input
@@ -637,30 +655,34 @@ export default function RosterApp(): React.JSX.Element {
                       >
                         <div className="h-full flex flex-col">
                           <div className="flex-1">
-                            <div className="grid gap-1 mb-1">
-                              <Select
-                                value={shift.role}
-                                onChange={(e) =>
-                                  updateShift(widx, day, "role", e.target.value)
-                                }
-                                className="w-full flex-1 px-0 rounded bg-gray-100"
-                              >
-                                <option value=""></option>
-                                {roleList.map((role) => (
-                                  <option key={role} value={role}>
-                                    {role}
-                                  </option>
-                                ))}
-                              </Select>
+                            <div className="grid gap-1 mb-3">
+                              {/* Role Selector */}
+                              <div className="flex gap-1">
+                                <Select
+                                  value={shift.role}
+                                  onChange={(e) =>
+                                    updateShift(
+                                      widx,
+                                      day,
+                                      "role",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-full flex-1 px-0 rounded bg-gray-100"
+                                >
+                                  <option value=""></option>
+                                  {roleList.map((role) => (
+                                    <option key={role} value={role}>
+                                      {role}
+                                    </option>
+                                  ))}
+                                </Select>
+                              </div>
+                              {/* Start Shift Selector */}
                               <div className="flex gap-1">
                                 <div className="w-4 h-4 flex-shrink-0">
                                   {shift.startTime === startTimes[day] && (
-                                    <div
-                                      className="w-4 h-4 text-xs text-center font-semibold text-gray-900 bg-green-500/75 rounded"
-                                      title="Opening"
-                                    >
-                                      O
-                                    </div>
+                                    <BadgeOpening />
                                   )}
                                 </div>
                                 <Select
@@ -687,15 +709,11 @@ export default function RosterApp(): React.JSX.Element {
                                   ))}
                                 </Select>
                               </div>
+                              {/* End Shift Selector */}
                               <div className="flex gap-1">
                                 <div className="w-4 h-4 flex-shrink-0">
                                   {shift.endTime === endTimes[day] && (
-                                    <div
-                                      className="w-4 h-4 text-xs text-center font-semibold text-gray-900 bg-red-500/75 rounded"
-                                      title="Closing"
-                                    >
-                                      C
-                                    </div>
+                                    <BadgeClosing />
                                   )}
                                 </div>
                                 <Select
@@ -727,16 +745,18 @@ export default function RosterApp(): React.JSX.Element {
 
                           {/* Bottom row - always at the bottom */}
                           <div className="flex justify-between items-center mt-auto">
-                            <div className="flex gap-1 text-xs">
-                              <div className="w-9 text-left px-1 font-semibold text-gray-600">
+                            <div className="flex gap-0.5 items-center">
+                              <div className="text-xs text-left px-0.5">
                                 {shift.startTime && shift.endTime
                                   ? `${calculateHours(shift.startTime, shift.endTime).toFixed(1)}h`
                                   : ""}
                               </div>
+                              {shift.paidBreak && <BadgePaidBreak />}
+                              {shift.mealBreak && <BadgeMealBreak />}
                             </div>
                             <button
                               onClick={() => resetShift(widx, day)}
-                              className="px-0.5 text-xs hover:outline border rounded cursor-pointer"
+                              className="px-0.5 text-xs text-sky-600 hover:outline border rounded cursor-pointer"
                               title="Reset"
                             >
                               <ArrowPathIcon className="size-4" />
@@ -766,15 +786,6 @@ export default function RosterApp(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Gantt Chart Table */}
-      <GanttChart
-        workers={workers}
-        startTimes={startTimes}
-        endTimes={endTimes}
-        generateTimeOptions={generateTimeOptions}
-        timeToMinutes={timeToMinutes}
-      />
-
       {/* Daily Memo Editor */}
       <DailyMemoController
         workers={workers}
@@ -791,6 +802,19 @@ export default function RosterApp(): React.JSX.Element {
         dailyMemos={dailyMemos}
         calculateHours={calculateHours}
       />
+
+      <div className="mt-5">
+        {/* Gantt Chart Table */}
+        <GanttChart
+          workers={workers}
+          startTimes={startTimes}
+          endTimes={endTimes}
+          generateTimeOptions={generateTimeOptions}
+          timeToMinutes={timeToMinutes}
+        />
+      </div>
+
+      <div className=""></div>
     </div>
   );
 }

@@ -73,7 +73,7 @@ export function GanttChart({
   );
 
   return (
-    <div className="text-gray-700 p-4 overflow-auto">
+    <div className="text-gray-800 p-4 overflow-auto">
       <h2 className="font-semibold mb-2">Team Time Shifts</h2>
 
       {/* Legend */}
@@ -99,14 +99,14 @@ export function GanttChart({
       </div>
 
       {/* Gantt Table */}
-      <table className=" border text-xs table-fixed ">
+      <table className=" border-0 text-xs table-fixed ">
         <thead>
           <tr className="bg-gray-100 sticky top-0">
-            <th className="border p-1 text-left sticky left-0 bg-gray-100 z-10 w-12">
+            <th className="border-0 p-1 text-left sticky left-0 bg-gray-100 z-10 w-12">
               Time
             </th>
             {days.map((day) => (
-              <th key={day} className="border p-1 text-center">
+              <th key={day} className="border-0 p-1 text-center">
                 {day}
               </th>
             ))}
@@ -114,21 +114,21 @@ export function GanttChart({
         </thead>
         <tbody>
           {ganttTimes.map((time, tIdx) => (
-            <tr key={time} className="hover:bg-gray-50">
-              <td className="border border-b-gray-300 p-1 sticky left-0 bg-gray-50 font-semibold z-10">
+            <tr key={time} className="hover:bg-gray-100">
+              <td className="border-t border-gray-300 p-1 sticky left-0 bg-gray-50 font-semibold z-10">
                 {time}
               </td>
               {ganttData[tIdx].map((activeWorkers, dIdx) => (
                 <td
                   key={dIdx}
-                  className="border-r border-b border-b-gray-300 px-1 align-middle"
+                  className="border-l border-gray-300 border-l-gray-600 px-1 align-middle"
                   style={{ position: "relative" }}
                   title={ganttData[tIdx][dIdx]
                     .filter((w) => w.isActive)
                     .map((w) => `${w.workerName} (${w.role})`)
                     .join(", ")}
                 >
-                  <div className="flex flex-wrap gap-0.5">
+                  <div className="flex flex-wrap gap-1 px-1">
                     {ganttData[tIdx][dIdx].map(
                       ({ workerIndex, isActive }, idx) => (
                         <div

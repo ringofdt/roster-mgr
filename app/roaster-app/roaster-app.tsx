@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Select } from "@headlessui/react";
+import { Select, Field, Textarea } from "@headlessui/react";
 import {
   ArrowPathIcon,
   XCircleIcon,
@@ -7,9 +7,16 @@ import {
   PlusCircleIcon,
 } from "@heroicons/react/24/solid";
 
-import { type Worker, type Day, type Shift, days } from "../components/types";
+import {
+  type Worker,
+  type Day,
+  type Shift,
+  type DailyMemo,
+  days,
+} from "../components/types";
 import { GanttChart } from "../components/GanttChart";
 import { RosterSummary } from "../components/RosterSummary";
+import { DailyMemoController } from "../components/DailyMemoController";
 
 const defaultStartTimes: Record<Day, string> = {
   Mon: "07:30",
@@ -91,17 +98,25 @@ export default function RosterApp(): React.JSX.Element {
     Object.fromEntries(days.map((d) => [d, true])) as Record<Day, boolean>,
   );
 
-  const earliestStart = Object.values(startTimes).reduce(
-    (earliest, time) =>
-      timeToMinutes(time) < timeToMinutes(earliest) ? time : earliest,
-    "23:59",
+  // Daily Memo state
+  const [dailyMemos, setDailyMemos] = useState<Record<Day, DailyMemo>>(
+    Object.fromEntries(
+      days.map((d) => [
+        d,
+        { dutySupervisor: "", oilChanger: "", trayOfRice: 0 },
+      ]),
+    ) as Record<Day, DailyMemo>,
   );
 
-  const latestEnd = Object.values(endTimes).reduce(
-    (latest, time) =>
-      timeToMinutes(time) > timeToMinutes(latest) ? time : latest,
-    "00:00",
-  );
+  const updateDailyMemo = (
+    day: Day,
+    field: keyof DailyMemo,
+    value: string | number,
+  ) => {
+    const updated = { ...dailyMemos };
+    (updated[day] as any)[field] = value;
+    setDailyMemos(updated);
+  };
 
   const calculateHours = (start: string, end: string): number => {
     if (!start || !end) return 0;
@@ -220,6 +235,7 @@ export default function RosterApp(): React.JSX.Element {
       startTimes: startTimes,
       endTimes: endTimes,
       workers: workers,
+      dailyMemos: dailyMemos,
       exportDate: new Date().toISOString(),
     };
 
@@ -267,7 +283,9 @@ export default function RosterApp(): React.JSX.Element {
           setWorkers(validWorkers);
         }
 
-        alert("Settings loaded successfully!");
+        if (settings.dailyMemos) {
+          setDailyMemos(settings.dailyMemos);
+        }
       } catch (error) {
         alert("Error loading settings file. Please check the file format.");
       }
@@ -464,13 +482,14 @@ export default function RosterApp(): React.JSX.Element {
         </div>
       </div>
 
+      {/* Member Input */}
       <div className="">
         <div className="p-2">
-          <h2 className="font-semibold">Add New Team Member</h2>
+          <h2 className="font-semibold">New Member</h2>
           <div className="flex items-center gap-4 flex-wrap">
             <input
               type="text"
-              placeholder="Team Member Name"
+              placeholder="Name"
               value={newWorkerName}
               onChange={(e) => setNewWorkerName(e.target.value)}
               onKeyDown={(e) => {
@@ -486,7 +505,7 @@ export default function RosterApp(): React.JSX.Element {
               placeholder="Title"
               value={newWorkerTitle}
               onChange={(e) => setNewWorkerTitle(e.target.value)}
-              className="border rounded px-2 py-1"
+              className="hidden border rounded px-2 py-1 "
             />
             <input
               type="text"
@@ -507,27 +526,28 @@ export default function RosterApp(): React.JSX.Element {
             ))}
             <button
               onClick={addWorkerRow}
-              className="flex items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
+              className="flex gap-1 items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
             >
               <PlusCircleIcon className="size-5" />
-              <span>Add Team Member</span>
+              <span>Add</span>
             </button>
           </div>
         </div>
       </div>
 
+      {/* Roster Editor */}
       <div>
         <div className="p-2 overflow-auto">
-          <table className="w-full border text-sm table-fixed">
+          <table className="w-full border-0 text-sm table-fixed">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border p-2" style={{ width: "140px" }}>
+                <th className="border-0 p-2" style={{ width: "140px" }}>
                   Team Member
                 </th>
                 {days.map((day) => (
                   <th
                     key={day}
-                    className="border p-1 text-center"
+                    className="border-l border-gray-400 p-1 text-center"
                     style={{ width: "120px" }}
                   >
                     {day}
@@ -538,7 +558,7 @@ export default function RosterApp(): React.JSX.Element {
             <tbody>
               {workers.map((worker, widx) => (
                 <tr key={widx}>
-                  <td className="border-r border-b p-2 align-top">
+                  <td className="border-gray-400 border-b p-2 align-top">
                     <div className="flex-1">
                       <div className="grid gap-1">
                         <input
@@ -556,7 +576,7 @@ export default function RosterApp(): React.JSX.Element {
                           onChange={(e) =>
                             updateWorkerField(widx, "title", e.target.value)
                           }
-                          className="border-b border-gray-300 px-1 w-full"
+                          className="hidden border-b border-gray-300 px-1 w-full"
                           placeholder="Title"
                         />
                         <input
@@ -604,7 +624,7 @@ export default function RosterApp(): React.JSX.Element {
                       return (
                         <td
                           key={day}
-                          className="border-r border-b p-2 align-top"
+                          className="border-gray-400 border-l border-b p-2 align-top"
                           style={{ height: "80px" }}
                         ></td>
                       );
@@ -612,7 +632,7 @@ export default function RosterApp(): React.JSX.Element {
                     return (
                       <td
                         key={day}
-                        className="border-r border-b p-2 align-top"
+                        className="border-gray-400 border-l border-b p-2 align-top"
                         style={{ height: "80px" }}
                       >
                         <div className="h-full flex flex-col">
@@ -731,9 +751,12 @@ export default function RosterApp(): React.JSX.Element {
             </tbody>
             <tfoot>
               <tr className="bg-gray-100 font-semibold">
-                <td className="border p-2">Total Hrs</td>
+                <td className="border-gray-400 border-0 p-2">Total Hrs</td>
                 {days.map((day) => (
-                  <td key={day} className="border p-2 text-center">
+                  <td
+                    key={day}
+                    className="border-gray-400 border-l p-2 text-center"
+                  >
                     {dailyTotals[day]?.toFixed(1) || "0.0"} hrs
                   </td>
                 ))}
@@ -752,12 +775,20 @@ export default function RosterApp(): React.JSX.Element {
         timeToMinutes={timeToMinutes}
       />
 
+      {/* Daily Memo Editor */}
+      <DailyMemoController
+        workers={workers}
+        dailyMemos={dailyMemos}
+        updateDailyMemo={updateDailyMemo}
+      />
+
       {/* Roster Summary Table */}
       <RosterSummary
         workers={workers}
         weeklyHours={weeklyHours}
         startTimes={startTimes}
         endTimes={endTimes}
+        dailyMemos={dailyMemos}
         calculateHours={calculateHours}
       />
     </div>

@@ -1,11 +1,12 @@
 import React from "react";
-import { type Worker, type Day, days } from "./types";
+import { type Worker, type Day, type DailyMemo, days } from "./types";
 
 interface RosterSummaryProps {
   workers: Worker[];
   weeklyHours: Record<string, number>;
   startTimes: Record<Day, string>;
   endTimes: Record<Day, string>;
+  dailyMemos: Record<Day, DailyMemo>;
   calculateHours: (start: string, end: string) => number;
 }
 
@@ -14,6 +15,7 @@ export function RosterSummary({
   weeklyHours,
   startTimes,
   endTimes,
+  dailyMemos,
   calculateHours,
 }: RosterSummaryProps) {
   return (
@@ -30,7 +32,7 @@ export function RosterSummary({
                 <th
                   key={day}
                   className="border p-2 text-center"
-                  style={{ width: "120px" }}
+                  style={{ width: "130px" }}
                 >
                   {day}
                 </th>
@@ -103,7 +105,7 @@ export function RosterSummary({
                           </div>
                         )}
 
-                        <div className="text-xs  text-gray-600">
+                        <div className="text-xs text-gray-600">
                           {shift.startTime && shift.endTime
                             ? `${calculateHours(shift.startTime, shift.endTime).toFixed(1)}h`
                             : ""}
@@ -115,6 +117,50 @@ export function RosterSummary({
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="bg-gray-50">
+              <td className="border p-2 align-top">Daily Memo</td>
+              {days.map((day) => {
+                const memo = dailyMemos[day];
+                return (
+                  <td key={day} className="border p-2 align-top">
+                    <div className="space-y-1">
+                      {memo.dutySupervisor && (
+                        <div className="grid gap-0 text-xs bg-blue-300/50 p-1 rounded">
+                          <span className="justify-self-start font-medium">
+                            Duty supervisor:
+                          </span>
+                          <span className="justify-self-center">
+                            {memo.dutySupervisor}
+                          </span>
+                        </div>
+                      )}
+                      {memo.oilChanger && (
+                        <div className="grid gap-0 text-xs bg-yellow-300/40 p-1 rounded">
+                          <span className="justify-self-start font-medium">
+                            Oil:
+                          </span>
+                          <span className="justify-self-center">
+                            {memo.oilChanger}
+                          </span>
+                        </div>
+                      )}
+                      {memo.trayOfRice > 0 && (
+                        <div className="grid gap-0 text-xs bg-slate-300/50 p-1 rounded">
+                          <span className="justify-self-start font-medium">
+                            Rice:
+                          </span>
+                          <span className="justify-self-center">
+                            {memo.trayOfRice}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>

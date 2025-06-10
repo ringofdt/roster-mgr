@@ -14,3 +14,9 @@ export type Worker = {
   remark: string;
   shifts: Record<Day, Shift>;
 };
+
+export type DailyMemo = {
+  dutySupervisor: string;
+  oilChanger: string;
+  trayOfRice: number;
+};

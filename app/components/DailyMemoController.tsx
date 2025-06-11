@@ -101,6 +101,47 @@ export function DailyMemoController({
               </td>
             ))}
           </tr>
+          {/*<tr>
+            <td className="border-t border-gray-300 p-2 bg-gray-50">Remark</td>
+            {days.map((day) => (
+              <td key={day} className="border-t border-l border-gray-300 p-2">
+                <input
+                  type="text"
+                  value={dailyMemos[day].remark || ""}
+                  onChange={(e) =>
+                    updateDailyMemo(day, "remark", e.target.value)
+                  }
+                  className="w-full border rounded px-2 py-1"
+                  placeholder=""
+                />
+              </td>
+            ))}
+          </tr>*/}
+          <tr>
+            <td className="border-t border-gray-300 p-2 bg-gray-50">Remark</td>
+            {days.map((day) => (
+              <td key={day} className="border-t border-l border-gray-300 p-2">
+                <textarea
+                  rows={4}
+                  value={dailyMemos[day].remark || ""}
+                  onChange={(e) =>
+                    updateDailyMemo(day, "remark", e.target.value)
+                  }
+                  className="w-full border rounded px-2 py-1"
+                  placeholder=""
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => updateDailyMemo(day, "remark", "")}
+                    className="text-xs px-0.5  underline cursor-pointer hover:outline"
+                  >
+                    clear
+                  </button>
+                </div>
+              </td>
+            ))}
+          </tr>
         </tbody>
       </table>
     </div>

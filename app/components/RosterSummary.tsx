@@ -187,7 +187,7 @@ export function RosterSummary({
                     )}
 
                     {memo.trayOfRice > 0 && (
-                      <div className="grid gap-0 text-xs bg-slate-300/50 p-1 rounded">
+                      <div className="grid gap-0 text-xs bg-stone-300/50 p-1 rounded">
                         <span className="justify-self-start font-medium">
                           Rice:
                         </span>
@@ -205,6 +205,16 @@ export function RosterSummary({
                         <span className="justify-self-center">
                           {memo.oilChanger}
                         </span>
+                      </div>
+                    )}
+                    {memo.remark && (
+                      <div className="grid gap-0 text-xs bg-pink-300/50 p-1 rounded">
+                        <span className="justify-self-start font-medium">
+                          Remark:
+                        </span>
+                        <div className="whitespace-pre-wrap break-all">
+                          {memo.remark}
+                        </div>
                       </div>
                     )}
                   </div>

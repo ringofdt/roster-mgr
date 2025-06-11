@@ -21,4 +21,5 @@ export type DailyMemo = {
   dutySupervisor: string;
   oilChanger: string;
   trayOfRice: number;
+  remark: string;
 };

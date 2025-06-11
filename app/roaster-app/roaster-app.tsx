@@ -180,7 +180,7 @@ export default function RosterApp(): React.JSX.Element {
     Object.fromEntries(
       days.map((d) => [
         d,
-        { dutySupervisor: "", oilChanger: "", trayOfRice: 0 },
+        { dutySupervisor: "", oilChanger: "", trayOfRice: 0, remark: "" },
       ]),
     ) as Record<Day, DailyMemo>,
   );

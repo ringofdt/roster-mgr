@@ -384,8 +384,8 @@ export default function RosterApp(): React.JSX.Element {
         if (settings.rosterInfo) {
           setSelectedWeek(settings.rosterInfo.week);
           setSelectedYear(settings.rosterInfo.year);
-          setRosterTitle(settings.rosterInfo.rosterTitle);
-          setRosterSubTitle(settings.rosterInfo.rosterSubTitle);
+          setRosterTitle(settings.rosterInfo.title);
+          setRosterSubTitle(settings.rosterInfo.subtitle);
         }
       } catch (error) {
         alert("Error loading settings file. Please check the file format.");

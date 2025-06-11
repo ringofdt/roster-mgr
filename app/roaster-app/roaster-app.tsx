@@ -242,7 +242,7 @@ export default function RosterApp(): React.JSX.Element {
     value: string,
   ) => {
     const updated = [...workers];
-    if (!updated[workerIndex].shifts[day].editable) return;
+    // if (!updated[workerIndex].shifts[day].editable) return;
     updated[workerIndex].shifts[day][field] = value;
     const shift = updated[workerIndex].shifts[day];
     const hrs = calculateHours(shift.startTime, shift.endTime);
@@ -324,7 +324,12 @@ export default function RosterApp(): React.JSX.Element {
       endTimes: endTimes,
       workers: workers,
       dailyMemos: dailyMemos,
-      currentWeekInfo: currentWeekInfo,
+      rosterInfo: {
+        title: rosterTitle,
+        subtitle: rosterSubTitle,
+        year: currentWeekInfo.year,
+        week: currentWeekInfo.week,
+      },
       exportDate: new Date().toISOString(),
     };
 
@@ -376,9 +381,11 @@ export default function RosterApp(): React.JSX.Element {
           setDailyMemos(settings.dailyMemos);
         }
 
-        if (settings.currentWeekInfo) {
-          setSelectedWeek(currentWeekInfo.week);
-          setSelectedYear(currentWeekInfo.year);
+        if (settings.rosterInfo) {
+          setSelectedWeek(settings.rosterInfo.week);
+          setSelectedYear(settings.rosterInfo.year);
+          setRosterTitle(settings.rosterInfo.rosterTitle);
+          setRosterSubTitle(settings.rosterInfo.rosterSubTitle);
         }
       } catch (error) {
         alert("Error loading settings file. Please check the file format.");
@@ -442,7 +449,6 @@ export default function RosterApp(): React.JSX.Element {
 
       <div className="">
         <div className="p-2 space-y-4">
-          <h2 className="font-semibold">Settings</h2>
           <div className="flex flex-col gap-4 pb-4 border-b">
             <div className="">
               <div className="flex flex-col gap-2">
@@ -455,7 +461,7 @@ export default function RosterApp(): React.JSX.Element {
                     <span>Save Settings</span>
                   </button>
                   <div
-                    className=" flex-1 justify-center rounded-lg w-80% border border-dashed border-gray-900/25 px-3 py-2 hover:bg-gray-100 transition-colors"
+                    className=" flex-1 justify-center rounded-lg w-80% border border-dashed border-gray-900/25 px-3 py-2 bg-gray-200 hover:bg-gray-100 transition-colors"
                     onDrop={handleSettingsDrop}
                     onDragOver={handleSettingsDragOver}
                   >
@@ -465,7 +471,7 @@ export default function RosterApp(): React.JSX.Element {
                         className="relative "
                       >
                         <span className="p-1 hover:outline border rounded cursor-pointer">
-                          Load Setting file
+                          Load Settings
                         </span>
 
                         <input
@@ -584,17 +590,8 @@ export default function RosterApp(): React.JSX.Element {
       <div className="">
         <div className="p-2">
           <h2 className="font-semibold">New Member</h2>
-          <div className="flex gap-2">
-            <div>
-              <button
-                onClick={addWorkerRow}
-                className="flex gap-1 items-center px-2 py-1 text-gray-600 hover:outline border rounded cursor-pointer"
-              >
-                <PlusCircleIcon className="size-5" />
-                <span>Add</span>
-              </button>
-            </div>
-            <div className="">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex gap-2 items-center">
               <input
                 type="text"
                 placeholder="Name"
@@ -608,35 +605,25 @@ export default function RosterApp(): React.JSX.Element {
                 }}
                 className="border rounded px-2 py-1 w-80"
               />
-              <label className="block text-xs px-1">New Member</label>
+              <button
+                onClick={addWorkerRow}
+                className="flex gap-1 items-center px-2 py-1 text-gray-600 hover:outline border rounded cursor-pointer"
+              >
+                <PlusCircleIcon className="size-5" />
+                <span>Add</span>
+              </button>
             </div>
-            <div className="hidden">
-              <input
-                type="text"
-                placeholder="Title"
-                value={newWorkerTitle}
-                onChange={(e) => setNewWorkerTitle(e.target.value)}
-                className="border rounded px-2 py-1 "
-              />
-              <label className="block text-xs px-1">Title</label>
-            </div>
-            <div className="hidden">
-              <input
-                type="text"
-                placeholder="Remark"
-                value={newWorkerRemark}
-                onChange={(e) => setNewWorkerRemark(e.target.value)}
-                className="hidden border rounded px-2 py-1"
-              />
-              <label className="block text-xs px-1">Remark</label>
-            </div>
-            <div className="flex flex-row gap-1">
+            <div className="col-span-2 flex flex-row gap-2">
               {days.map((day) => (
-                <label key={day} className="px-1">
+                <label
+                  key={day}
+                  className="px-1 border rounded items-center flex border-gray-400"
+                >
                   <input
                     type="checkbox"
                     checked={newWorkerDays[day]}
                     onChange={() => toggleDayForNewWorker(day)}
+                    className="mr-1"
                   />
                   {day}
                 </label>
@@ -647,48 +634,49 @@ export default function RosterApp(): React.JSX.Element {
       </div>
 
       <div className="p-2 grid grid-cols-1 gap-6">
-        <div className="flex gap-2">
-          <div className="">
-            <label className="block text-xs px-1">&nbsp;</label>
-            <button
-              onClick={() => {
-                const current = getCurrentWeekInfo();
-                setSelectedYear(current.year);
-                setSelectedWeek(current.week + 1);
-              }}
-              className="flex gap-1 items-center px-2 py-1 text-gray-600 cursor-pointer border rounded hover:outline"
-            >
-              <CursorArrowRaysIcon className="size-5" />
-              <span className="font-light"> Next Week</span>
-            </button>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-row gap-1">
+            <div className="">
+              <label className="block text-xs px-1">&nbsp;</label>
+              <button
+                onClick={() => {
+                  const current = getCurrentWeekInfo();
+                  setSelectedYear(current.year);
+                  setSelectedWeek(current.week + 1);
+                }}
+                className="flex gap-1 items-center px-2 py-1 text-gray-600 cursor-pointer border rounded hover:outline"
+              >
+                <CursorArrowRaysIcon className="size-5" />
+                <span className="font-light"> Next Week</span>
+              </button>
+            </div>
+            <div className="">
+              <label className="block text-xs px-1">Year</label>
+              <input
+                type="number"
+                value={selectedYear}
+                onChange={(e) => {
+                  setSelectedYear(
+                    parseInt(e.target.value) || new Date().getFullYear(),
+                  );
+                }}
+                min="2020"
+                max="2050"
+                className="border rounded px-2 py-1 w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-xs px-1">Week</label>
+              <input
+                type="number"
+                value={selectedWeek}
+                onChange={(e) => setSelectedWeek(parseInt(e.target.value) || 1)}
+                min="1"
+                max="53"
+                className="border rounded px-2 py-1 w-16"
+              />
+            </div>
           </div>
-          <div className="">
-            <label className="block text-xs px-1">Year</label>
-            <input
-              type="number"
-              value={selectedYear}
-              onChange={(e) => {
-                setSelectedYear(
-                  parseInt(e.target.value) || new Date().getFullYear(),
-                );
-              }}
-              min="2020"
-              max="2050"
-              className="border rounded px-2 py-1 w-full"
-            />
-          </div>
-          <div>
-            <label className="block text-xs px-1">Week</label>
-            <input
-              type="number"
-              value={selectedWeek}
-              onChange={(e) => setSelectedWeek(parseInt(e.target.value) || 1)}
-              min="1"
-              max="53"
-              className="border rounded px-2 py-1 w-16"
-            />
-          </div>
-
           <div className="">
             <label className="block text-xs px-1">Title</label>
             <input
@@ -696,7 +684,7 @@ export default function RosterApp(): React.JSX.Element {
               placeholder=""
               value={rosterTitle}
               onChange={(e) => setRosterTitle(e.target.value)}
-              className="border rounded px-2 py-1 w-100"
+              className="border rounded px-2 py-1 w-full"
             />
           </div>
           <div className="">
@@ -706,7 +694,7 @@ export default function RosterApp(): React.JSX.Element {
               placeholder=""
               value={rosterSubTitle}
               onChange={(e) => setRosterSubTitle(e.target.value)}
-              className="border rounded px-2 py-1 w-80"
+              className="border rounded px-2 py-1 w-full"
             />
           </div>
         </div>

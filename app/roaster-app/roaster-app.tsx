@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Select, Field, Textarea } from "@headlessui/react";
+import dayjs from "dayjs";
+import { Select } from "@headlessui/react";
 import {
   ArrowPathIcon,
   XCircleIcon,
   XMarkIcon,
   PlusCircleIcon,
+  CursorArrowRaysIcon,
 } from "@heroicons/react/24/solid";
 
 import {
@@ -44,6 +46,14 @@ const defaultEndTimes: Record<Day, string> = {
   Sun: "17:00",
 };
 
+const defaultRoleList: string[] = [
+  "Roll",
+  "Nigiri",
+  "Inari",
+  "Service",
+  "Closing",
+];
+
 function generateTimeOptions(start: string, end: string): string[] {
   const options: string[] = [];
   const [sh, sm] = start.split(":").map(Number);
@@ -72,6 +82,63 @@ function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
+// Date helper functions
+function getFirstMondayOfJuly(year: number): Date {
+  // Start with July 1st
+  const july1 = new Date(year, 6, 1); // Month is 0-indexed, so 6 = July
+  const dayOfWeek = july1.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+  // Calculate days to add to get to the first Monday
+  // If July 1st is Sunday (0), add 1 day. If Monday (1), add 0 days, etc.
+  const daysToAdd = dayOfWeek === 0 ? 1 : dayOfWeek === 1 ? 0 : 8 - dayOfWeek;
+
+  const firstMonday = new Date(year, 6, 1 + daysToAdd);
+  return firstMonday;
+}
+
+function getWeekStartDate(year: number, weekNumber: number): Date {
+  const firstMonday = getFirstMondayOfJuly(year);
+  const startDate = new Date(firstMonday);
+  startDate.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+  return startDate;
+}
+
+function getWeekDates(year: number, weekNumber: number): Record<Day, Date> {
+  const monday = getWeekStartDate(year, weekNumber);
+  const dates: Record<Day, Date> = {} as Record<Day, Date>;
+
+  days.forEach((day, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    dates[day] = date;
+    // `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getDate().toString().padStart(2, "0")}`;
+  });
+
+  return dates;
+}
+
+function getCurrentWeekInfo(): { year: number; week: number } {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+
+  // Check if we're before July (use previous year's numbering)
+  if (today.getMonth() < 6) {
+    // Before July
+    const previousYear = currentYear - 1;
+    const firstMonday = getFirstMondayOfJuly(previousYear);
+    const diffTime = today.getTime() - firstMonday.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const week = Math.floor(diffDays / 7) + 1;
+    return { year: previousYear, week };
+  } else {
+    const firstMonday = getFirstMondayOfJuly(currentYear);
+    const diffTime = today.getTime() - firstMonday.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const week = Math.floor(diffDays / 7) + 1;
+    return { year: currentYear, week: Math.max(1, week) };
+  }
+}
+
 export default function RosterApp(): React.JSX.Element {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [weeklyHours, setWeeklyHours] = useState<Record<string, number>>({});
@@ -81,16 +148,7 @@ export default function RosterApp(): React.JSX.Element {
 
   const [newRole, setNewRole] = useState<string>("");
 
-  const [roleList, setRoleList] = useState<string[]>([
-    "Roll",
-    "Roll-1",
-    "Roll-2",
-    "Nigiri",
-    "Inari",
-    "Inari/rice",
-    "Service",
-    "Closing",
-  ]);
+  const [roleList, setRoleList] = useState<string[]>(defaultRoleList);
 
   const [startTimes, setStartTimes] =
     useState<Record<Day, string>>(defaultStartTimes);
@@ -103,6 +161,19 @@ export default function RosterApp(): React.JSX.Element {
   const [newWorkerDays, setNewWorkerDays] = useState<Record<Day, boolean>>(
     Object.fromEntries(days.map((d) => [d, true])) as Record<Day, boolean>,
   );
+
+  // Year and Week state
+  const currentWeekInfo = getCurrentWeekInfo();
+  const [selectedYear, setSelectedYear] = useState<number>(
+    currentWeekInfo.year,
+  );
+  const [selectedWeek, setSelectedWeek] = useState<number>(
+    currentWeekInfo.week,
+  );
+  const weekDates = getWeekDates(selectedYear, selectedWeek);
+
+  const [rosterTitle, setRosterTitle] = useState<string>("");
+  const [rosterSubTitle, setRosterSubTitle] = useState<string>("");
 
   // Daily Memo state
   const [dailyMemos, setDailyMemos] = useState<Record<Day, DailyMemo>>(
@@ -253,6 +324,7 @@ export default function RosterApp(): React.JSX.Element {
       endTimes: endTimes,
       workers: workers,
       dailyMemos: dailyMemos,
+      currentWeekInfo: currentWeekInfo,
       exportDate: new Date().toISOString(),
     };
 
@@ -302,6 +374,11 @@ export default function RosterApp(): React.JSX.Element {
 
         if (settings.dailyMemos) {
           setDailyMemos(settings.dailyMemos);
+        }
+
+        if (settings.currentWeekInfo) {
+          setSelectedWeek(currentWeekInfo.week);
+          setSelectedYear(currentWeekInfo.year);
         }
       } catch (error) {
         alert("Error loading settings file. Please check the file format.");
@@ -429,7 +506,7 @@ export default function RosterApp(): React.JSX.Element {
                     }}
                   />
                   <button
-                    className="flex items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
+                    className="flex gap-1 items-center px-2 py-1 text-gray-600 hover:outline border rounded cursor-pointer"
                     onClick={() => {
                       if (
                         newRole.trim() &&
@@ -507,51 +584,130 @@ export default function RosterApp(): React.JSX.Element {
       <div className="">
         <div className="p-2">
           <h2 className="font-semibold">New Member</h2>
-          <div className="flex items-center gap-4 flex-wrap">
-            <input
-              type="text"
-              placeholder="Name"
-              value={newWorkerName}
-              onChange={(e) => setNewWorkerName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addWorkerRow();
-                }
-              }}
-              className="border rounded px-2 py-1"
-            />
-            <input
-              type="text"
-              placeholder="Title"
-              value={newWorkerTitle}
-              onChange={(e) => setNewWorkerTitle(e.target.value)}
-              className="hidden border rounded px-2 py-1 "
-            />
-            <input
-              type="text"
-              placeholder="Remark"
-              value={newWorkerRemark}
-              onChange={(e) => setNewWorkerRemark(e.target.value)}
-              className="border rounded px-2 py-1"
-            />
-            {days.map((day) => (
-              <label key={day} className="flex items-center gap-1">
-                <input
-                  type="checkbox"
-                  checked={newWorkerDays[day]}
-                  onChange={() => toggleDayForNewWorker(day)}
-                />
-                {day}
-              </label>
-            ))}
+          <div className="flex gap-2">
+            <div>
+              <button
+                onClick={addWorkerRow}
+                className="flex gap-1 items-center px-2 py-1 text-gray-600 hover:outline border rounded cursor-pointer"
+              >
+                <PlusCircleIcon className="size-5" />
+                <span>Add</span>
+              </button>
+            </div>
+            <div className="">
+              <input
+                type="text"
+                placeholder="Name"
+                value={newWorkerName}
+                onChange={(e) => setNewWorkerName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addWorkerRow();
+                  }
+                }}
+                className="border rounded px-2 py-1 w-80"
+              />
+              <label className="block text-xs px-1">New Member</label>
+            </div>
+            <div className="hidden">
+              <input
+                type="text"
+                placeholder="Title"
+                value={newWorkerTitle}
+                onChange={(e) => setNewWorkerTitle(e.target.value)}
+                className="border rounded px-2 py-1 "
+              />
+              <label className="block text-xs px-1">Title</label>
+            </div>
+            <div className="hidden">
+              <input
+                type="text"
+                placeholder="Remark"
+                value={newWorkerRemark}
+                onChange={(e) => setNewWorkerRemark(e.target.value)}
+                className="hidden border rounded px-2 py-1"
+              />
+              <label className="block text-xs px-1">Remark</label>
+            </div>
+            <div className="flex flex-row gap-1">
+              {days.map((day) => (
+                <label key={day} className="px-1">
+                  <input
+                    type="checkbox"
+                    checked={newWorkerDays[day]}
+                    onChange={() => toggleDayForNewWorker(day)}
+                  />
+                  {day}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-2 grid grid-cols-1 gap-6">
+        <div className="flex gap-2">
+          <div className="">
+            <label className="block text-xs px-1">&nbsp;</label>
             <button
-              onClick={addWorkerRow}
-              className="flex gap-1 items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
+              onClick={() => {
+                const current = getCurrentWeekInfo();
+                setSelectedYear(current.year);
+                setSelectedWeek(current.week + 1);
+              }}
+              className="flex gap-1 items-center px-2 py-1 text-gray-600 cursor-pointer border rounded hover:outline"
             >
-              <PlusCircleIcon className="size-5" />
-              <span>Add</span>
+              <CursorArrowRaysIcon className="size-5" />
+              <span className="font-light"> Next Week</span>
             </button>
+          </div>
+          <div className="">
+            <label className="block text-xs px-1">Year</label>
+            <input
+              type="number"
+              value={selectedYear}
+              onChange={(e) => {
+                setSelectedYear(
+                  parseInt(e.target.value) || new Date().getFullYear(),
+                );
+              }}
+              min="2020"
+              max="2050"
+              className="border rounded px-2 py-1 w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs px-1">Week</label>
+            <input
+              type="number"
+              value={selectedWeek}
+              onChange={(e) => setSelectedWeek(parseInt(e.target.value) || 1)}
+              min="1"
+              max="53"
+              className="border rounded px-2 py-1 w-16"
+            />
+          </div>
+
+          <div className="">
+            <label className="block text-xs px-1">Title</label>
+            <input
+              type="text"
+              placeholder=""
+              value={rosterTitle}
+              onChange={(e) => setRosterTitle(e.target.value)}
+              className="border rounded px-2 py-1 w-100"
+            />
+          </div>
+          <div className="">
+            <label className="block text-xs px-1">Subtitle</label>
+            <input
+              type="text"
+              placeholder=""
+              value={rosterSubTitle}
+              onChange={(e) => setRosterSubTitle(e.target.value)}
+              className="border rounded px-2 py-1 w-80"
+            />
           </div>
         </div>
       </div>
@@ -559,16 +715,23 @@ export default function RosterApp(): React.JSX.Element {
       {/* Roster Editor */}
       <div>
         <div className="p-2 overflow-auto">
-          <table className="w-full border-0 text-sm table-fixed">
+          <table className="w-full border-0 text-sm table-fixed text-gray-800">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border-0 p-2 w-[150px]">Team Member</th>
+                <th className="border-0 p-2 w-[150px]">
+                  <div className="">Team</div>
+                </th>
                 {days.map((day) => (
                   <th
                     key={day}
                     className="border-l border-gray-400 p-1 text-center"
                   >
-                    {day}
+                    <div className="flex flex-col gap-0">
+                      <span>{day}</span>
+                      <span className="font-normal">
+                        {dayjs(weekDates[day]).format("DD MMM, YYYY")}
+                      </span>
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -594,7 +757,7 @@ export default function RosterApp(): React.JSX.Element {
                           onChange={(e) =>
                             updateWorkerField(widx, "title", e.target.value)
                           }
-                          className="hidden border-b border-gray-300 px-1 w-full"
+                          className="hidden border-b border-gray-300 px-1 w-full font-light"
                           placeholder="Title"
                         />
                         <input
@@ -603,7 +766,7 @@ export default function RosterApp(): React.JSX.Element {
                           onChange={(e) =>
                             updateWorkerField(widx, "remark", e.target.value)
                           }
-                          className="border-b border-gray-300 px-1 w-full"
+                          className="border-b border-gray-300 px-1 w-full font-light"
                           placeholder="Remark"
                         />
                       </div>
@@ -800,6 +963,9 @@ export default function RosterApp(): React.JSX.Element {
         startTimes={startTimes}
         endTimes={endTimes}
         dailyMemos={dailyMemos}
+        weekDates={weekDates}
+        rosterTitle={rosterTitle}
+        rosterSubTitle={rosterSubTitle}
         calculateHours={calculateHours}
       />
 

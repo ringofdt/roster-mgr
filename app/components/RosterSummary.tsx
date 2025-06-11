@@ -1,4 +1,5 @@
 import React from "react";
+import dayjs from "dayjs";
 import { type Worker, type Day, type DailyMemo, days } from "./types";
 import {
   BadgeOpening,
@@ -13,6 +14,9 @@ interface RosterSummaryProps {
   startTimes: Record<Day, string>;
   endTimes: Record<Day, string>;
   dailyMemos: Record<Day, DailyMemo>;
+  weekDates: Record<Day, Date>;
+  rosterTitle: string;
+  rosterSubTitle: string;
   calculateHours: (start: string, end: string) => number;
 }
 
@@ -22,18 +26,45 @@ export function RosterSummary({
   startTimes,
   endTimes,
   dailyMemos,
+  weekDates,
+  rosterTitle,
+  rosterSubTitle,
   calculateHours,
 }: RosterSummaryProps) {
+  // const startDate = weekDates["Mon"];
+  // const endDate = weekDates["Sun"];
+  const startDate = Object.values(weekDates).at(0);
+  const endDate = Object.values(weekDates).at(-1);
+  const weekRange = `${dayjs(startDate).format("DD MMM")} - ${dayjs(endDate).format("DD MMM")}`;
+
   return (
-    <div className="p-4 text-gray-800">
-      <h2 className="font-semibold mb-2">Roster Summary</h2>
+    <div className="p-4 text-gray-800 mt-4">
+      <div className="grid grid-cols-3 items-end mb-1 ">
+        <div>
+          <div className="px-2 py-1 rounded ">
+            <div className=" font-medium text-sky-600">{weekRange}</div>
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="px-2 text-2xl font-normal">{rosterTitle}</div>
+          {rosterSubTitle && (
+            <div className="px-2 text-lg font-light">{rosterSubTitle}</div>
+          )}
+        </div>
+        <div></div>
+      </div>
       <table className="w-full border-none table-fixed text-xs md:text-sm">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border-0 p-2 w-[120px]">Team Member</th>
+            <th className="border-0 p-2 w-[120px]">Team</th>
             {days.map((day) => (
               <th key={day} className="border-0 p-2 text-center" style={{}}>
-                {day}
+                <div className="flex flex-col gap-0">
+                  <span>{day}</span>
+                  <span className="text-xs font-normal">
+                    {dayjs(weekDates[day]).format("DD MMM, YYYY")}
+                  </span>
+                </div>
               </th>
             ))}
           </tr>
@@ -41,14 +72,22 @@ export function RosterSummary({
         <tbody>
           {workers.map((worker, widx) => (
             <tr key={widx}>
-              <td className="border-y border-gray-300 p-2 align-top">
-                <div className="">{worker.name}</div>
-                {worker.title && <div className="">{worker.title}</div>}
-                {worker.remark && <div className="">{worker.remark}</div>}
-                <div className="text-xs">
-                  {weeklyHours[worker.name]
-                    ? `${weeklyHours[worker.name].toFixed(1)} hrs`
-                    : ""}
+              <td className="border-t border-gray-300 bg-gray-50 p-2 align-top">
+                <div className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <div className="text-base">{worker.name}</div>
+                    {worker.title && <div className="">{worker.title}</div>}
+                    {worker.remark && (
+                      <div className="text-xs ">{worker.remark}</div>
+                    )}
+                  </div>
+                  <div className="flex mt-auto">
+                    <div className="text-xs">
+                      {weeklyHours[worker.name]
+                        ? `${weeklyHours[worker.name].toFixed(1)} hrs`
+                        : ""}
+                    </div>
+                  </div>
                 </div>
               </td>
               {days.map((day) => {

@@ -337,7 +337,7 @@ export default function RosterApp(): React.JSX.Element {
     const dataUri =
       "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
 
-    const exportFileDefaultName = `roster-settings-${new Date().toISOString().split("T")[0]}.json`;
+    const exportFileDefaultName = `roster-settings-${dayjs().format("YYYYMMDDTHHmmss")}.json`;
 
     const linkElement = document.createElement("a");
     linkElement.setAttribute("href", dataUri);

@@ -10,7 +10,8 @@ import {
 } from "./Badges";
 import {
   CameraIcon,
-  ExclamationTriangleIcon,
+  XMarkIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/outline";
 
 interface RosterSummaryProps {
@@ -86,7 +87,7 @@ export function RosterSummary({
           <span> Export as Image</span>
         </button>
       </div>
-      <div ref={rosterRef} className="">
+      <div ref={rosterRef} className="p-4">
         <div className="grid grid-cols-3 items-end mb-1 ">
           <div>
             <div className="px-2 py-1 rounded ">
@@ -101,14 +102,14 @@ export function RosterSummary({
           </div>
           <div></div>
         </div>
-        <table className="w-full border-none table-fixed text-xs md:text-sm">
+        <table className="w-full border-none table-fixed text-xs md:text-base">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border-0 p-2 w-[120px]">Team</th>
+              <th className="border-0 p-1 w-[120px]">Team</th>
               {days.map((day) => (
-                <th key={day} className="border-0 p-2 text-center" style={{}}>
+                <th key={day} className="border-0 p-1 text-center" style={{}}>
                   <div className="flex flex-col gap-0">
-                    <span>{day}</span>
+                    <span className="capitalize">{day.toUpperCase()}</span>
                     <span className="text-xs font-normal">
                       {dayjs(weekDates[day]).format("DD MMM, YYYY")}
                     </span>
@@ -120,7 +121,7 @@ export function RosterSummary({
           <tbody>
             {workers.map((worker, widx) => (
               <tr key={widx}>
-                <td className="border-t border-gray-300 bg-gray-50 p-2 align-top">
+                <td className="border-t border-gray-300 bg-gray-50 p-1 align-center">
                   <div className="flex flex-col h-full">
                     <div className="flex-1">
                       <div className="text-base">{worker.name}</div>
@@ -130,7 +131,7 @@ export function RosterSummary({
                       )}
                     </div>
                     <div className="flex mt-auto">
-                      <div className="text-xs">
+                      <div className="hidden text-xs">
                         {weeklyHours[worker.name]
                           ? `${weeklyHours[worker.name].toFixed(1)} hrs`
                           : ""}
@@ -144,12 +145,12 @@ export function RosterSummary({
                     return (
                       <td
                         key={day}
-                        className="border-t border-l border-gray-300 p-2 align-center"
+                        className="border-t border-l border-gray-300 p-1 align-center"
                         style={{}}
                       >
                         {!shift.editable && (
                           <div className="flex justify-center text-gray-200">
-                            <ExclamationTriangleIcon className="size-8" />
+                            <CalendarIcon className="size-5" />
                           </div>
                         )}
                       </td>
@@ -158,7 +159,7 @@ export function RosterSummary({
                   return (
                     <td
                       key={day}
-                      className="border-t border-l border-gray-300 p-2 align-top"
+                      className="border-t border-l border-gray-300 p-1 align-top"
                       style={{}}
                     >
                       <div className="flex flex-col justify-start gap-1">
@@ -166,22 +167,29 @@ export function RosterSummary({
                           {shift.role && (
                             <div className="font-medium">{shift.role}</div>
                           )}
-                          <div className="flex items-center text-xs gap-1">
-                            {shift.startTime === startTimes[day] && (
-                              <BadgeOpening />
-                            )}
-                            {shift.endTime === endTimes[day] && (
-                              <BadgeClosing />
-                            )}
-                          </div>
+                          <div className="flex items-center text-xs gap-1"></div>
                         </div>
-                        <div className="flex">
+                        <div className="flex items-center">
                           {shift.startTime && shift.endTime && (
                             <div className="flex flex-row">
-                              <span>{shift.startTime}</span>
-                              <span className="text-xs px-1">-</span>
-                              <span>{shift.endTime}</span>
+                              <span
+                                className={`rounded px-0.5 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}
+                              >
+                                {shift.startTime}
+                              </span>
+                              <span className="px-1">-</span>
+                              <span
+                                className={`rounded px-0.5 ${shift.endTime === endTimes[day] && "bg-rose-400/50"}`}
+                              >
+                                {shift.endTime}
+                              </span>
                             </div>
+                          )}
+                          {false && shift.startTime === startTimes[day] && (
+                            <BadgeOpening />
+                          )}
+                          {false && shift.endTime === endTimes[day] && (
+                            <BadgeClosing />
                           )}
                         </div>
                         <div className="flex gap-1">
@@ -212,10 +220,10 @@ export function RosterSummary({
                 <div className="grid gap-0.5 mt-3 text-xs">
                   <div className="underline">Remark</div>
                   <div className="flex items-center gap-2">
-                    <BadgeOpening /> <span>Opening</span>
+                    <span className="px-1 bg-lime-400/50">Opening</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <BadgeClosing /> <span>Closing</span>
+                    <span className="px-1 bg-rose-400/50">Closing</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <BadgePaidBreak /> <span>Paid Break</span>
@@ -233,22 +241,22 @@ export function RosterSummary({
                     className="border-t border-l border-gray-300 p-2 align-top"
                   >
                     <div className="space-y-1">
-                      {memo.dutySupervisor && (
-                        <div className="grid gap-0 text-xs bg-blue-300/50 p-1 rounded">
-                          <span className="justify-self-start text-nowrap">
-                            Duty supervisor:
-                          </span>
-                          <span className="justify-self-center font-medium">
-                            {memo.dutySupervisor}
+                      {memo.trayOfRice > 0 && (
+                        <div className="grid gap-0 text-xs bg-stone-300/50 p-1 rounded">
+                          <span className="justify-self-start ">Rice:</span>
+                          <span className="justify-self-center font-medium text-sm">
+                            {memo.trayOfRice}
                           </span>
                         </div>
                       )}
 
-                      {memo.trayOfRice > 0 && (
-                        <div className="grid gap-0 text-xs bg-stone-300/50 p-1 rounded">
-                          <span className="justify-self-start ">Rice:</span>
-                          <span className="justify-self-center font-medium">
-                            {memo.trayOfRice}
+                      {memo.dutySupervisor && (
+                        <div className="grid gap-0 text-xs bg-slate-300/50 p-1 rounded">
+                          <span className="justify-self-start text-nowrap">
+                            Duty supervisor:
+                          </span>
+                          <span className="justify-self-center font-medium text-sm">
+                            {memo.dutySupervisor}
                           </span>
                         </div>
                       )}

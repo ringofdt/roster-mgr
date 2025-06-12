@@ -87,22 +87,24 @@ export function RosterSummary({
           <span> Export as Image</span>
         </button>
       </div>
-      <div ref={rosterRef} className="p-4">
+      <div ref={rosterRef} className="p-3">
         <div className="grid grid-cols-3 items-end mb-1 ">
           <div>
             <div className="px-2 py-1 rounded ">
-              <div className=" font-medium text-sky-600">{weekRange}</div>
+              <div className=" text-sm font-medium text-sky-600">
+                {weekRange}
+              </div>
             </div>
           </div>
           <div className="text-center">
-            <div className="px-2 text-2xl font-normal">{rosterTitle}</div>
+            <div className="px-2 text-lg font-normal">{rosterTitle}</div>
             {rosterSubTitle && (
-              <div className="px-2 text-lg font-light">{rosterSubTitle}</div>
+              <div className="px-2 text-base font-light">{rosterSubTitle}</div>
             )}
           </div>
           <div></div>
         </div>
-        <table className="w-full border-none table-fixed text-xs md:text-base">
+        <table className="w-full border-none table-fixed text-sm lg:text-base">
           <thead>
             <tr className="bg-gray-100">
               <th className="border-0 p-1 w-[120px]">Team</th>
@@ -124,14 +126,14 @@ export function RosterSummary({
                 <td className="border-t border-gray-300 bg-gray-50 p-1 align-center">
                   <div className="flex flex-col h-full">
                     <div className="flex-1">
-                      <div className="text-base">{worker.name}</div>
+                      <div className="">{worker.name}</div>
                       {worker.title && <div className="">{worker.title}</div>}
                       {worker.remark && (
                         <div className="text-xs ">{worker.remark}</div>
                       )}
                     </div>
                     <div className="flex mt-auto">
-                      <div className="hidden text-xs">
+                      <div className="hidden">
                         {weeklyHours[worker.name]
                           ? `${weeklyHours[worker.name].toFixed(1)} hrs`
                           : ""}
@@ -165,19 +167,22 @@ export function RosterSummary({
                       <div className="flex flex-col justify-start gap-1">
                         <div className="flex flex-wrap md:flex-nowrap justify-between items-center gap-1 ">
                           {shift.role && (
-                            <div className="font-medium">{shift.role}</div>
+                            <div className="font-medium text-[0.95em] break-all">
+                              {shift.role}
+                            </div>
                           )}
-                          <div className="flex items-center text-xs gap-1"></div>
                         </div>
                         <div className="flex items-center">
                           {shift.startTime && shift.endTime && (
-                            <div className="flex flex-row">
-                              <span
-                                className={`rounded px-0.5 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}
-                              >
-                                {shift.startTime}
-                              </span>
-                              <span className="px-1">-</span>
+                            <div className="flex flex-wrap text-[0.95em]">
+                              <div className="">
+                                <span
+                                  className={`rounded px-0.5 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}
+                                >
+                                  {shift.startTime}
+                                </span>
+                                <span className="px-0.5">-</span>
+                              </div>
                               <span
                                 className={`rounded px-0.5 ${shift.endTime === endTimes[day] && "bg-rose-400/50"}`}
                               >
@@ -242,20 +247,22 @@ export function RosterSummary({
                   >
                     <div className="space-y-1">
                       {memo.trayOfRice > 0 && (
-                        <div className="grid gap-0 text-xs bg-stone-300/50 p-1 rounded">
-                          <span className="justify-self-start ">Rice:</span>
-                          <span className="justify-self-center font-medium text-sm">
+                        <div className="grid gap-0 bg-stone-300/50 p-1 rounded">
+                          <span className="justify-self-start text-xs">
+                            Rice:
+                          </span>
+                          <span className="justify-self-center font-medium">
                             {memo.trayOfRice}
                           </span>
                         </div>
                       )}
 
                       {memo.dutySupervisor && (
-                        <div className="grid gap-0 text-xs bg-slate-300/50 p-1 rounded">
-                          <span className="justify-self-start text-nowrap">
+                        <div className="grid gap-0 bg-slate-300/50 p-1 rounded">
+                          <span className="justify-self-start text-xs">
                             Duty supervisor:
                           </span>
-                          <span className="justify-self-center font-medium text-sm">
+                          <span className="justify-self-center font-medium">
                             {memo.dutySupervisor}
                           </span>
                         </div>

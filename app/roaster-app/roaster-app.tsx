@@ -551,7 +551,7 @@ export default function RosterApp(): React.JSX.Element {
               </div>
               <div className=" gap-1">
                 <label className="font-semibold">Day Time Shifts</label>
-                <div className="flex flex-col md:flex-row gap-1">
+                <div className="flex flex-col md:flex-row md:flex-wrap gap-1">
                   {days.map((day) => (
                     <div
                       key={day}
@@ -590,7 +590,7 @@ export default function RosterApp(): React.JSX.Element {
       <div className="">
         <div className="p-2">
           <h2 className="font-semibold">New Member</h2>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
             <div className="flex gap-2 items-center">
               <input
                 type="text"
@@ -603,7 +603,7 @@ export default function RosterApp(): React.JSX.Element {
                     addWorkerRow();
                   }
                 }}
-                className="border rounded px-2 py-1 w-80"
+                className="border rounded px-2 py-1 w-3/4"
               />
               <button
                 onClick={addWorkerRow}
@@ -613,7 +613,7 @@ export default function RosterApp(): React.JSX.Element {
                 <span>Add</span>
               </button>
             </div>
-            <div className="col-span-2 flex flex-row gap-2">
+            <div className=" flex flex-row flex-wrap gap-2">
               {days.map((day) => (
                 <label
                   key={day}
@@ -646,7 +646,7 @@ export default function RosterApp(): React.JSX.Element {
                 }}
                 className="flex gap-1 items-center px-2 py-1 text-gray-600 cursor-pointer border rounded hover:outline"
               >
-                <CursorArrowRaysIcon className="size-5" />
+                <CursorArrowRaysIcon className="size-4" />
                 <span className="font-light"> Next Week</span>
               </button>
             </div>
@@ -793,7 +793,7 @@ export default function RosterApp(): React.JSX.Element {
                       return (
                         <td
                           key={day}
-                          className="border-gray-400 border-l border-b p-2 align-top"
+                          className="border-gray-400 border-l border-b p-2 align-center"
                           style={{ height: "80px" }}
                         ></td>
                       );
@@ -846,7 +846,7 @@ export default function RosterApp(): React.JSX.Element {
                                       e.target.value,
                                     )
                                   }
-                                  className="w-full px-0"
+                                  className="w-full px-0 border-b border-gray-300"
                                 >
                                   <option value=""></option>
                                   {generateDayTimeOptions(
@@ -877,7 +877,7 @@ export default function RosterApp(): React.JSX.Element {
                                       e.target.value,
                                     )
                                   }
-                                  className="w-full px-0"
+                                  className="w-full px-0 border-b border-gray-300"
                                 >
                                   <option value=""></option>
                                   {generateDayTimeOptions(
@@ -895,9 +895,9 @@ export default function RosterApp(): React.JSX.Element {
                           </div>
 
                           {/* Bottom row - always at the bottom */}
-                          <div className="flex justify-between items-center mt-auto">
+                          <div className="flex flex-wrap justify-between items-center mt-auto">
                             <div className="flex gap-0.5 items-center">
-                              <div className="text-xs text-left px-0.5">
+                              <div className="text-xs text-left">
                                 {shift.startTime && shift.endTime
                                   ? `${calculateHours(shift.startTime, shift.endTime).toFixed(1)}h`
                                   : ""}

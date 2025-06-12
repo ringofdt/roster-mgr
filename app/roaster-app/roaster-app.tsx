@@ -33,7 +33,7 @@ const defaultStartTimes: Record<Day, string> = {
   Thu: "07:30",
   Fri: "07:30",
   Sat: "07:30",
-  Sun: "08:30",
+  Sun: "08:00",
 };
 
 const defaultEndTimes: Record<Day, string> = {
@@ -444,8 +444,8 @@ export default function RosterApp(): React.JSX.Element {
   };
 
   return (
-    <div className="p-3 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Team Roster Manager</h1>
+    <div className="p-3 max-w-6xl mx-auto text-gray-800">
+      <h1 className="text-2xl font-bold mb-4">Roster made simple</h1>
 
       <div className="">
         <div className="p-2 space-y-4">

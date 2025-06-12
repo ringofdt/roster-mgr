@@ -4,8 +4,8 @@ import RoasterApp from "../roaster-app/roaster-app";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "PI Roster App" },
+    { name: "description", content: "Rosters made simple" },
   ];
 }
 

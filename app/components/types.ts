@@ -5,6 +5,7 @@ export type Shift = {
   startTime: string;
   endTime: string;
   role: string;
+  hours: number;
   paidBreak: string;
   mealBreak: string;
   editable: boolean;

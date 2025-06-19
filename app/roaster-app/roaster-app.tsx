@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
-import { Select } from "@headlessui/react";
+import { Select, Checkbox } from "@headlessui/react";
 import {
   ArrowPathIcon,
   XCircleIcon,
   XMarkIcon,
   PlusCircleIcon,
   CursorArrowRaysIcon,
+  PlusIcon,
+  MinusIcon,
 } from "@heroicons/react/24/solid";
 
 import {
@@ -19,12 +21,7 @@ import {
 import { GanttChart } from "../components/GanttChart";
 import { RosterSummary } from "../components/RosterSummary";
 import { DailyMemoController } from "../components/DailyMemoController";
-import {
-  BadgeOpening,
-  BadgeClosing,
-  BadgePaidBreak,
-  BadgeMealBreak,
-} from "../components/Badges";
+import { BadgeOpening, BadgeClosing, BreakBadge } from "../components/Badges";
 
 const defaultStartTimes: Record<Day, string> = {
   Mon: "07:30",
@@ -96,10 +93,22 @@ function getFirstMondayOfJuly(year: number): Date {
   return firstMonday;
 }
 
+function getFinancialYearStartDate(year: number): Date {
+  // July 1st of the financial year
+  const julyFirst = new Date(year, 6, 1); // July = 6
+
+  // Find the Monday of the week containing July 1st
+  const dayOfWeek = julyFirst.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const offsetToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+  const firstWeekMonday = new Date(julyFirst);
+  firstWeekMonday.setDate(julyFirst.getDate() + offsetToMonday);
+  return firstWeekMonday;
+}
+
 function getWeekStartDate(year: number, weekNumber: number): Date {
-  const firstMonday = getFirstMondayOfJuly(year);
-  const startDate = new Date(firstMonday);
-  startDate.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+  const yearStartDate = getFinancialYearStartDate(year);
+  const startDate = new Date(yearStartDate);
+  startDate.setDate(yearStartDate.getDate() + (weekNumber - 1) * 7);
   return startDate;
 }
 
@@ -117,26 +126,23 @@ function getWeekDates(year: number, weekNumber: number): Record<Day, Date> {
   return dates;
 }
 
+function getFinancialYearAndWeek(date: Date): { year: number; week: number } {
+  const y = date.getFullYear();
+  const week1Start = getFinancialYearStartDate(y);
+  const fyStartDate =
+    date < week1Start ? getFinancialYearStartDate(y - 1) : week1Start;
+  const fiscalYear = fyStartDate.getFullYear();
+
+  const diffInDays = Math.floor(
+    (date.getTime() - fyStartDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  const week = Math.floor(diffInDays / 7) + 1;
+  return { year: fiscalYear, week };
+}
+
 function getCurrentWeekInfo(): { year: number; week: number } {
   const today = new Date();
-  const currentYear = today.getFullYear();
-
-  // Check if we're before July (use previous year's numbering)
-  if (today.getMonth() < 6) {
-    // Before July
-    const previousYear = currentYear - 1;
-    const firstMonday = getFirstMondayOfJuly(previousYear);
-    const diffTime = today.getTime() - firstMonday.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const week = Math.floor(diffDays / 7) + 1;
-    return { year: previousYear, week };
-  } else {
-    const firstMonday = getFirstMondayOfJuly(currentYear);
-    const diffTime = today.getTime() - firstMonday.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const week = Math.floor(diffDays / 7) + 1;
-    return { year: currentYear, week: Math.max(1, week) };
-  }
+  return getFinancialYearAndWeek(today);
 }
 
 export default function RosterApp(): React.JSX.Element {
@@ -146,6 +152,7 @@ export default function RosterApp(): React.JSX.Element {
     Object.fromEntries(days.map((d) => [d, 0])) as Record<Day, number>,
   );
 
+  const [weekTotalHours, setWeekTotalHours] = useState(0);
   const [newRole, setNewRole] = useState<string>("");
 
   const [roleList, setRoleList] = useState<string[]>(defaultRoleList);
@@ -202,6 +209,24 @@ export default function RosterApp(): React.JSX.Element {
     return Math.max(0, eh + em / 60 - (sh + sm / 60));
   };
 
+  const incrementWeek = () => {
+    const nextWeek = selectedWeek + 1;
+    const nextWeekDate = getWeekStartDate(selectedYear, nextWeek);
+    const { year, week } = getFinancialYearAndWeek(nextWeekDate);
+    setSelectedYear(year);
+    setSelectedWeek(week);
+  };
+
+  const decrementWeek = () => {
+    const prevWeek = selectedWeek - 1;
+    const currentWeekStart = getWeekStartDate(selectedYear, selectedWeek);
+    const prevWeekDate = new Date(currentWeekStart);
+    prevWeekDate.setDate(currentWeekStart.getDate() - 7);
+    const { year, week } = getFinancialYearAndWeek(prevWeekDate);
+    setSelectedYear(year);
+    setSelectedWeek(week);
+  };
+
   useEffect(() => {
     const newWeeklyHours: Record<string, number> = {};
     const newDailyTotals: Record<Day, number> = Object.fromEntries(
@@ -220,9 +245,13 @@ export default function RosterApp(): React.JSX.Element {
       });
       newWeeklyHours[worker.name || "Unnamed"] = total;
     });
-
+    const newWeekTotalHours = Object.values(newDailyTotals).reduce(
+      (sum, val) => sum + val,
+      0,
+    );
     setWeeklyHours(newWeeklyHours);
     setDailyTotals(newDailyTotals);
+    setWeekTotalHours(newWeekTotalHours);
   }, [workers]);
 
   const updateWorkerField = (
@@ -238,17 +267,36 @@ export default function RosterApp(): React.JSX.Element {
   const updateShift = (
     workerIndex: number,
     day: Day,
-    field: "startTime" | "endTime" | "role",
+    field: "startTime" | "endTime" | "role" | "paidBreak" | "mealBreak",
     value: string,
   ) => {
     const updated = [...workers];
     // if (!updated[workerIndex].shifts[day].editable) return;
     updated[workerIndex].shifts[day][field] = value;
-    const shift = updated[workerIndex].shifts[day];
-    const hrs = calculateHours(shift.startTime, shift.endTime);
-    updated[workerIndex].shifts[day]["mealBreak"] = hrs >= 5 ? "MB" : "";
-    updated[workerIndex].shifts[day]["paidBreak"] = hrs >= 4 ? "PB" : "";
+    if (["startTime", "endTime"].includes(field)) {
+      const shift = updated[workerIndex].shifts[day];
+      const hrs = calculateHours(shift.startTime, shift.endTime);
+      updated[workerIndex].shifts[day]["hours"] = hrs;
+      // updated[workerIndex].shifts[day]["mealBreak"] = hrs >= 5 ? "MB" : "";
+      // updated[workerIndex].shifts[day]["paidBreak"] = hrs >= 4 ? "PB" : "";
+    }
+    setWorkers(updated);
+  };
 
+  const updateShiftHours = () => {
+    const updated = workers.map((worker) => {
+      const newShifts = { ...worker.shifts };
+
+      days.forEach((day) => {
+        const shift = newShifts[day];
+        if (shift) {
+          const hrs = calculateHours(shift.startTime, shift.endTime);
+          newShifts[day] = { ...shift, hours: hrs };
+        }
+      });
+
+      return { ...worker, shifts: newShifts };
+    });
     setWorkers(updated);
   };
 
@@ -259,6 +307,7 @@ export default function RosterApp(): React.JSX.Element {
       startTime: "",
       endTime: "",
       role: "",
+      hours: 0,
       paidBreak: "",
       mealBreak: "",
       editable: true,
@@ -275,6 +324,7 @@ export default function RosterApp(): React.JSX.Element {
       startTime: "",
       endTime: "",
       role: "",
+      hours: 0,
       paidBreak: "",
       mealBreak: "",
       editable: false,
@@ -287,6 +337,7 @@ export default function RosterApp(): React.JSX.Element {
           startTime: "",
           endTime: "",
           role: "",
+          hours: 0,
           paidBreak: "",
           mealBreak: "",
           editable: true,
@@ -327,8 +378,8 @@ export default function RosterApp(): React.JSX.Element {
       rosterInfo: {
         title: rosterTitle,
         subtitle: rosterSubTitle,
-        year: currentWeekInfo.year,
-        week: currentWeekInfo.week,
+        year: selectedYear,
+        week: selectedWeek,
       },
       exportDate: new Date().toISOString(),
     };
@@ -375,6 +426,7 @@ export default function RosterApp(): React.JSX.Element {
           );
 
           setWorkers(validWorkers);
+          // updateShiftHours();
         }
 
         if (settings.dailyMemos) {
@@ -426,6 +478,7 @@ export default function RosterApp(): React.JSX.Element {
         startTime: "",
         endTime: "",
         role: "",
+        hours: 0,
         paidBreak: "",
         mealBreak: "",
         editable: false,
@@ -435,6 +488,7 @@ export default function RosterApp(): React.JSX.Element {
         startTime: "",
         endTime: "",
         role: "",
+        hours: 0,
         paidBreak: "",
         mealBreak: "",
         editable: true,
@@ -488,18 +542,89 @@ export default function RosterApp(): React.JSX.Element {
                   </div>
                 </div>
               </div>
+              <div>
+                <button
+                  onClick={updateShiftHours}
+                  className="flex items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
+                >
+                  <span>Calculate Hours</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex  gap-2 justify-between">
-              <div className="flex flex-col gap-1 ">
-                <label className="font-semibold">Roles</label>
-
-                <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2 ">
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold">Member</label>
+                <div className="flex items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                  <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                    <XMarkIcon className="hidden size-3" />
+                  </div>
                   <input
                     type="text"
-                    placeholder="Add new role"
-                    value={newRole}
-                    className="border rounded px-2 py-1"
+                    value={newWorkerName}
+                    onChange={(e) => setNewWorkerName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addWorkerRow();
+                      }
+                    }}
+                    className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
+                    placeholder="Name"
+                  />
+                  <div className="flex shrink-0 items-center focus-within:relative">
+                    <button
+                      onClick={addWorkerRow}
+                      className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
+                    >
+                      <PlusCircleIcon className=" size-5" />
+                      <span>Add </span>
+                    </button>
+                  </div>
+                </div>
+                <div className="grid gap-1 px-2">
+                  <label className="font-light">Available Days</label>
+                  <div className=" flex flex-row flex-wrap gap-2">
+                    {days.map((day) => (
+                      <label
+                        key={day}
+                        className="px-1 border rounded items-center flex border-gray-400"
+                      >
+                        <Checkbox
+                          checked={newWorkerDays[day]}
+                          onChange={() => toggleDayForNewWorker(day)}
+                          className="group block size-4 mr-0.5 rounded border bg-white data-checked:bg-sky-600"
+                        >
+                          {/* Checkmark icon */}
+                          <svg
+                            className="stroke-white opacity-0 group-data-checked:opacity-100"
+                            viewBox="0 0 14 14"
+                            fill="none"
+                          >
+                            <path
+                              d="M3 8L6 11L11 3.5"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </Checkbox>
+                        {day}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1 ">
+                <label className="font-semibold">Roles</label>
+                <div className="flex items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                  <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                    <XMarkIcon className="hidden size-3" />
+                  </div>
+                  <input
+                    type="text"
+                    name="newRole"
                     onChange={(e) => setNewRole(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && newRole.trim()) {
@@ -510,24 +635,27 @@ export default function RosterApp(): React.JSX.Element {
                         }
                       }
                     }}
+                    className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
+                    placeholder="Role"
                   />
-                  <button
-                    className="flex gap-1 items-center px-2 py-1 text-gray-600 hover:outline border rounded cursor-pointer"
-                    onClick={() => {
-                      if (
-                        newRole.trim() &&
-                        !roleList.includes(newRole.trim())
-                      ) {
-                        setRoleList([...roleList, newRole.trim()]);
-                        setNewRole("");
-                      }
-                    }}
-                  >
-                    <PlusCircleIcon className="size-5" />
-                    <span>Add</span>
-                  </button>
+                  <div className="flex shrink-0 items-center focus-within:relative">
+                    <button
+                      className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
+                      onClick={() => {
+                        if (
+                          newRole.trim() &&
+                          !roleList.includes(newRole.trim())
+                        ) {
+                          setRoleList([...roleList, newRole.trim()]);
+                          setNewRole("");
+                        }
+                      }}
+                    >
+                      <PlusCircleIcon className=" size-5" />
+                      <span>Add </span>
+                    </button>
+                  </div>
                 </div>
-
                 <div className="flex flex-wrap gap-2">
                   {roleList.map((role, idx) => (
                     <div
@@ -549,8 +677,9 @@ export default function RosterApp(): React.JSX.Element {
                   ))}
                 </div>
               </div>
+
               <div className=" gap-1">
-                <label className="font-semibold">Day Time Shifts</label>
+                <label className="font-semibold">Shifts</label>
                 <div className="flex flex-col md:flex-row md:flex-wrap gap-1">
                   {days.map((day) => (
                     <div
@@ -586,115 +715,88 @@ export default function RosterApp(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Member Input */}
-      <div className="">
-        <div className="p-2">
-          <h2 className="font-semibold">New Member</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                placeholder="Name"
-                value={newWorkerName}
-                onChange={(e) => setNewWorkerName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addWorkerRow();
-                  }
-                }}
-                className="border rounded px-2 py-1 w-3/4"
-              />
-              <button
-                onClick={addWorkerRow}
-                className="flex gap-1 items-center px-2 py-1 text-gray-600 hover:outline border rounded cursor-pointer"
-              >
-                <PlusCircleIcon className="size-5" />
-                <span>Add</span>
-              </button>
-            </div>
-            <div className=" flex flex-row flex-wrap gap-2">
-              {days.map((day) => (
-                <label
-                  key={day}
-                  className="px-1 border rounded items-center flex border-gray-400"
-                >
-                  <input
-                    type="checkbox"
-                    checked={newWorkerDays[day]}
-                    onChange={() => toggleDayForNewWorker(day)}
-                    className="mr-1"
-                  />
-                  {day}
-                </label>
-              ))}
-            </div>
+      <div className="p-2 flex gap-2">
+        <div className="grid grid-cols-2 w-1/3 md:flex  gap-1 ">
+          <div className="flex flex-col gap-1">
+            <label className=" text-xs px-1">Year</label>
+            <input
+              type="number"
+              value={selectedYear}
+              onChange={(e) => {
+                setSelectedYear(
+                  parseInt(e.target.value) || new Date().getFullYear(),
+                );
+              }}
+              min="2020"
+              max="2050"
+              className="border rounded px-2 py-1"
+            />
           </div>
-        </div>
-      </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-xs px-1">Week</label>
+            <input
+              type="number"
+              value={selectedWeek}
+              onChange={(e) => setSelectedWeek(parseInt(e.target.value) || 1)}
+              min="1"
+              max="53"
+              className="border rounded px-2 py-1 "
+            />
+          </div>
 
-      <div className="p-2 grid grid-cols-1 gap-6">
-        <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-row gap-1">
-            <div className="">
-              <label className="block text-xs px-1">&nbsp;</label>
+          <div className="grid col-span-2 md:col-span-1 gap-1">
+            <label className="block text-xs px-1">&nbsp;</label>
+            <div className="flex flex-row gap-0.5 w-full">
+              <button
+                onClick={() => {
+                  decrementWeek();
+                }}
+                className="flex flex-row gap-1  items-center px-1 py-2 text-gray-600 cursor-pointer border rounded hover:outline"
+              >
+                <MinusIcon className="size-4" />
+              </button>
               <button
                 onClick={() => {
                   const current = getCurrentWeekInfo();
                   setSelectedYear(current.year);
-                  setSelectedWeek(current.week + 1);
+                  setSelectedWeek(current.week);
                 }}
-                className="flex gap-1 items-center px-2 py-1 text-gray-600 cursor-pointer border rounded hover:outline"
+                className="flex flex-row gap-1  items-center px-1 py-2 text-gray-600 cursor-pointer border rounded hover:outline"
               >
-                <CursorArrowRaysIcon className="size-4" />
-                <span className="font-light"> Next Week</span>
+                <span className="font-light text-xs text-nowrap">
+                  This Week
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  incrementWeek();
+                }}
+                className="flex flex-row gap-1  items-center px-1 py-2 text-gray-600 cursor-pointer border rounded hover:outline"
+              >
+                <PlusIcon className="size-4" />
               </button>
             </div>
-            <div className="">
-              <label className="block text-xs px-1">Year</label>
-              <input
-                type="number"
-                value={selectedYear}
-                onChange={(e) => {
-                  setSelectedYear(
-                    parseInt(e.target.value) || new Date().getFullYear(),
-                  );
-                }}
-                min="2020"
-                max="2050"
-                className="border rounded px-2 py-1 w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-xs px-1">Week</label>
-              <input
-                type="number"
-                value={selectedWeek}
-                onChange={(e) => setSelectedWeek(parseInt(e.target.value) || 1)}
-                min="1"
-                max="53"
-                className="border rounded px-2 py-1 w-16"
-              />
-            </div>
           </div>
-          <div className="">
+        </div>
+        <div className="flex flex-col md:flex-row w-2/3 gap-1">
+          <div className="flex flex-col gap-1 md:w-1/2">
             <label className="block text-xs px-1">Title</label>
             <input
               type="text"
               placeholder=""
               value={rosterTitle}
               onChange={(e) => setRosterTitle(e.target.value)}
-              className="border rounded px-2 py-1 w-full"
+              className="border rounded px-2 py-1 "
             />
           </div>
-          <div className="">
+          <div className="flex flex-col gap-1 md:w-1/2">
             <label className="block text-xs px-1">Subtitle</label>
             <input
               type="text"
               placeholder=""
               value={rosterSubTitle}
               onChange={(e) => setRosterSubTitle(e.target.value)}
-              className="border rounded px-2 py-1 w-full"
+              className="border rounded px-2 py-1"
             />
           </div>
         </div>
@@ -775,7 +877,7 @@ export default function RosterApp(): React.JSX.Element {
                     <div className="flex justify-between items-center text-xs mt-auto">
                       <span className="font-semibold">
                         {weeklyHours[worker.name]
-                          ? `${weeklyHours[worker.name].toFixed(1)} hrs`
+                          ? `${weeklyHours[worker.name]?.toFixed(1)} hrs`
                           : "0.0 hrs"}
                       </span>
                       <button
@@ -806,7 +908,7 @@ export default function RosterApp(): React.JSX.Element {
                       >
                         <div className="h-full flex flex-col">
                           <div className="flex-1">
-                            <div className="grid gap-1 mb-3">
+                            <div className="grid gap-1">
                               {/* Role Selector */}
                               <div className="flex gap-1">
                                 <Select
@@ -891,27 +993,75 @@ export default function RosterApp(): React.JSX.Element {
                                   ))}
                                 </Select>
                               </div>
+                              <div className="flex gap-0.5 items-center">
+                                {shift.hours >= 4 && <BreakBadge text="PB" />}
+                                {shift.hours >= 5 && <BreakBadge text="MB" />}
+                                {shift.hours >= 10 && <BreakBadge text="MB2" />}
+                              </div>
+                              <div>
+                                {false && shift.hours >= 4 && (
+                                  <div className="flex items-center rounded-md bg-white px-1 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2 has-[input:focus-within]:outline-indigo-600">
+                                    <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                                      PB
+                                    </div>
+
+                                    <input
+                                      type="text"
+                                      value={shift.paidBreak || ""}
+                                      onChange={(e) =>
+                                        updateShift(
+                                          widx,
+                                          day,
+                                          "paidBreak",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="border-b border-gray-300 px-1 w-full font-light"
+                                      placeholder=""
+                                    />
+                                  </div>
+                                )}
+                                {false && shift.hours >= 5 && (
+                                  <div className="flex items-center rounded-md bg-white px-1 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2 has-[input:focus-within]:outline-indigo-600">
+                                    <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                                      MB
+                                    </div>
+                                    <input
+                                      type="text"
+                                      value={shift.mealBreak || ""}
+                                      onChange={(e) =>
+                                        updateShift(
+                                          widx,
+                                          day,
+                                          "mealBreak",
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="border-b border-gray-300 px-1 w-full font-light"
+                                      placeholder=""
+                                    />
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
 
                           {/* Bottom row - always at the bottom */}
-                          <div className="flex flex-wrap justify-between items-center mt-auto">
-                            <div className="flex gap-0.5 items-center">
+                          <div>
+                            <div className="flex flex-wrap justify-between items-center mt-auto">
                               <div className="text-xs text-left">
-                                {shift.startTime && shift.endTime
-                                  ? `${calculateHours(shift.startTime, shift.endTime).toFixed(1)}h`
+                                {shift.hours
+                                  ? `${shift.hours?.toFixed(1)}h`
                                   : ""}
                               </div>
-                              {shift.paidBreak && <BadgePaidBreak />}
-                              {shift.mealBreak && <BadgeMealBreak />}
+                              <button
+                                onClick={() => resetShift(widx, day)}
+                                className="px-0.5 text-xs text-sky-600 hover:outline border rounded cursor-pointer"
+                                title="Reset"
+                              >
+                                <ArrowPathIcon className="size-4" />
+                              </button>
                             </div>
-                            <button
-                              onClick={() => resetShift(widx, day)}
-                              className="px-0.5 text-xs text-sky-600 hover:outline border rounded cursor-pointer"
-                              title="Reset"
-                            >
-                              <ArrowPathIcon className="size-4" />
-                            </button>
                           </div>
                         </div>
                       </td>
@@ -922,7 +1072,9 @@ export default function RosterApp(): React.JSX.Element {
             </tbody>
             <tfoot>
               <tr className="bg-gray-100 font-semibold">
-                <td className="border-gray-400 border-0 p-2">Total Hrs</td>
+                <td className="border-gray-400 border-0 p-2">
+                  Total: <div>{weekTotalHours} hrs</div>
+                </td>
                 {days.map((day) => (
                   <td
                     key={day}
@@ -954,7 +1106,6 @@ export default function RosterApp(): React.JSX.Element {
         weekDates={weekDates}
         rosterTitle={rosterTitle}
         rosterSubTitle={rosterSubTitle}
-        calculateHours={calculateHours}
       />
 
       <div className="mt-5">

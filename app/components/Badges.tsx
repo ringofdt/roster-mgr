@@ -37,3 +37,15 @@ export function BadgeMealBreak() {
     </div>
   );
 }
+
+interface BreakBadgeProps {
+  text: string;
+}
+
+export function BreakBadge(props: BreakBadgeProps) {
+  return (
+    <div className="text-xs px-1 border border-gray-400 rounded">
+      <span>{props.text}</span>
+    </div>
+  );
+}

@@ -1,13 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
+import { Field, Label, Switch } from "@headlessui/react";
 import { domToPng, domToJpeg } from "modern-screenshot";
 import dayjs from "dayjs";
 import { type Worker, type Day, type DailyMemo, days } from "./types";
-import {
-  BadgeOpening,
-  BadgeClosing,
-  BadgePaidBreak,
-  BadgeMealBreak,
-} from "./Badges";
+import { BadgeOpening, BadgeClosing, BreakBadge } from "./Badges";
 import {
   CameraIcon,
   XMarkIcon,
@@ -23,7 +19,6 @@ interface RosterSummaryProps {
   weekDates: Record<Day, Date>;
   rosterTitle: string;
   rosterSubTitle: string;
-  calculateHours: (start: string, end: string) => number;
 }
 
 export function RosterSummary({
@@ -35,9 +30,10 @@ export function RosterSummary({
   weekDates,
   rosterTitle,
   rosterSubTitle,
-  calculateHours,
 }: RosterSummaryProps) {
   const rosterRef = useRef<HTMLDivElement>(null);
+
+  const [showHours, setShowHours] = useState(false);
 
   // const startDate = weekDates["Mon"];
   // const endDate = weekDates["Sun"];
@@ -77,7 +73,18 @@ export function RosterSummary({
   return (
     <div className="p-4 text-gray-800 mt-4">
       {/* Export Button */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 gap-3">
+        <Field className="flex items-center gap-1">
+          <Label>Show Hours</Label>
+          <Switch
+            checked={showHours}
+            onChange={setShowHours}
+            className="group inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition data-checked:bg-blue-600"
+          >
+            <span className="size-4 translate-x-1 rounded-full bg-white transition group-data-checked:translate-x-6" />
+          </Switch>
+        </Field>
+
         <button
           id="export-button"
           onClick={() => exportAsImage("png")}
@@ -104,7 +111,7 @@ export function RosterSummary({
           </div>
           <div></div>
         </div>
-        <table className="w-full border-none table-fixed text-sm lg:text-base">
+        <table className="w-full border-none table-fixed text-sm lg:text-base text-gray-800">
           <thead>
             <tr className="bg-gray-100">
               <th className="border-0 p-1 w-[120px]">Team</th>
@@ -122,23 +129,27 @@ export function RosterSummary({
           </thead>
           <tbody>
             {workers.map((worker, widx) => (
-              <tr key={widx}>
-                <td className="border-t border-gray-300 bg-gray-50 p-1 align-center">
-                  <div className="flex flex-col h-full">
+              <tr key={widx} className="h-full">
+                <td className="border-t border-gray-300 bg-gray-50 p-1 ">
+                  <div className="flex flex-col gap-1 h-full">
                     <div className="flex-1">
                       <div className="">{worker.name}</div>
                       {worker.title && <div className="">{worker.title}</div>}
                       {worker.remark && (
-                        <div className="text-xs ">{worker.remark}</div>
+                        <div className="text-[80%] font-light">
+                          {worker.remark}
+                        </div>
                       )}
                     </div>
-                    <div className="flex mt-auto">
-                      <div className="hidden">
-                        {weeklyHours[worker.name]
-                          ? `${weeklyHours[worker.name].toFixed(1)} hrs`
-                          : ""}
+                    {showHours && (
+                      <div className="mt-auto">
+                        <div className="text-xs">
+                          {weeklyHours[worker.name]
+                            ? `${weeklyHours[worker.name].toFixed(1)} hrs`
+                            : ""}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </td>
                 {days.map((day) => {
@@ -161,20 +172,20 @@ export function RosterSummary({
                   return (
                     <td
                       key={day}
-                      className="border-t border-l border-gray-300 p-1 align-top"
+                      className="border-t border-l border-gray-300 p-1 align-top "
                       style={{}}
                     >
-                      <div className="flex flex-col justify-start gap-1">
+                      <div className="flex flex-col gap-1 pb-1 h-full">
                         <div className="flex flex-wrap md:flex-nowrap justify-between items-center gap-1 ">
                           {shift.role && (
-                            <div className="font-medium text-[0.95em] break-all">
+                            <div className="font-medium text-[0.9em] break-all">
                               {shift.role}
                             </div>
                           )}
                         </div>
                         <div className="flex items-center">
                           {shift.startTime && shift.endTime && (
-                            <div className="flex flex-wrap text-[0.95em]">
+                            <div className="flex flex-wrap text-[0.9em]">
                               <div className="">
                                 <span
                                   className={`rounded px-0.5 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}
@@ -197,20 +208,22 @@ export function RosterSummary({
                             <BadgeClosing />
                           )}
                         </div>
-                        <div className="flex gap-1">
-                          {shift.startTime && shift.endTime && (
-                            <div className="hidden text-xs">
-                              {calculateHours(
-                                shift.startTime,
-                                shift.endTime,
-                              ).toFixed(1)}
-                              h
-                            </div>
-                          )}
-
-                          {shift.paidBreak && <BadgePaidBreak />}
-                          {shift.mealBreak && <BadgeMealBreak />}
+                        <div className="flex flex-row flex-wrap gap-1">
+                          {shift.hours >= 4 && <BreakBadge text="PB" />}
+                          {shift.hours >= 5 && <BreakBadge text="MB" />}
+                          {shift.hours >= 10 && <BreakBadge text="MB2" />}
                         </div>
+                        {showHours && (
+                          <div className="mt-auto">
+                            {shift.startTime && shift.endTime && (
+                              <div className="text-xs">
+                                {shift.hours
+                                  ? `${shift.hours?.toFixed(1)}h`
+                                  : ""}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </td>
                   );
@@ -220,23 +233,8 @@ export function RosterSummary({
           </tbody>
           <tfoot>
             <tr className="bg-gray-50">
-              <td className="border-t border-gray-300 p-2 align-top">
-                <div className="">Daily Memo</div>
-                <div className="grid gap-0.5 mt-3 text-xs">
-                  <div className="underline">Remark</div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-1 bg-lime-400/50">Opening</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-1 bg-rose-400/50">Closing</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BadgePaidBreak /> <span>Paid Break</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BadgeMealBreak /> <span>Meal Break</span>
-                  </div>
-                </div>
+              <td className="border-t border-gray-300 p-1 align-top">
+                <div className="underline font-light">Memo</div>
               </td>
               {days.map((day) => {
                 const memo = dailyMemos[day];
@@ -245,6 +243,7 @@ export function RosterSummary({
                     key={day}
                     className="border-t border-l border-gray-300 p-2 align-top"
                   >
+                    {showHours && <div className=""></div>}
                     <div className="space-y-1">
                       {memo.trayOfRice > 0 && (
                         <div className="grid gap-0 bg-stone-300/50 p-1 rounded">
@@ -288,6 +287,33 @@ export function RosterSummary({
                   </td>
                 );
               })}
+            </tr>
+            <tr>
+              <td colSpan={8} className="p-1">
+                <div className="underline font-light">Remark</div>
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-1">
+                    <span className="px-1 bg-lime-400/50">Opening</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="px-1 bg-rose-400/50">Closing</span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1">
+                    <BreakBadge text="PB" />
+                    <span>Paid Break</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <BreakBadge text="MB" /> <span>Meal Break</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <BreakBadge text="MB2" />{" "}
+                    <span>
+                      2<sup>nd</sup> Meal Break
+                    </span>
+                  </div>
+                </div>
+              </td>
             </tr>
           </tfoot>
         </table>

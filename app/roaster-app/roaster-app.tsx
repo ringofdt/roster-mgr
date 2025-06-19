@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
-import { Select, Checkbox } from "@headlessui/react";
+import { Select, Checkbox, Label, Field } from "@headlessui/react";
 import {
   ArrowPathIcon,
   XCircleIcon,
@@ -583,10 +583,9 @@ export default function RosterApp(): React.JSX.Element {
                   </div>
                 </div>
                 <div className="grid gap-1 px-2">
-                  <label className="font-light">Available Days</label>
                   <div className=" flex flex-row flex-wrap gap-2">
                     {days.map((day) => (
-                      <label
+                      <Field
                         key={day}
                         className="px-1 border rounded items-center flex border-gray-400"
                       >
@@ -609,8 +608,8 @@ export default function RosterApp(): React.JSX.Element {
                             />
                           </svg>
                         </Checkbox>
-                        {day}
-                      </label>
+                        <Label>{day}</Label>
+                      </Field>
                     ))}
                   </div>
                 </div>

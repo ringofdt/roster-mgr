@@ -16,6 +16,7 @@ interface RosterSummaryProps {
   startTimes: Record<Day, string>;
   endTimes: Record<Day, string>;
   dailyMemos: Record<Day, DailyMemo>;
+  dailyHours: Record<Day, number>;
   weekDates: Record<Day, Date>;
   rosterTitle: string;
   rosterSubTitle: string;
@@ -27,6 +28,7 @@ export function RosterSummary({
   startTimes,
   endTimes,
   dailyMemos,
+  dailyHours,
   weekDates,
   rosterTitle,
   rosterSubTitle,
@@ -69,7 +71,10 @@ export function RosterSummary({
     } finally {
     }
   };
-
+  const weekTotalHours = Object.values(dailyHours).reduce(
+    (sum, val) => sum + val,
+    0,
+  );
   return (
     <div className="p-4 text-gray-800 mt-4">
       {/* Export Button */}
@@ -232,6 +237,24 @@ export function RosterSummary({
             ))}
           </tbody>
           <tfoot>
+            {showHours && (
+              <tr className="bg-gray-50 text-xs font-light">
+                <td className="border-gray-300 border-t p-1">
+                  <span>Total:</span>
+                  <span className="text-nowrap block">
+                    {weekTotalHours?.toFixed(1)} hrs
+                  </span>
+                </td>
+                {days.map((day) => (
+                  <td
+                    key={day}
+                    className="border-gray-300 border-t border-l p-1 text-center"
+                  >
+                    {dailyHours[day]?.toFixed(1) || "0.0"} hrs
+                  </td>
+                ))}
+              </tr>
+            )}
             <tr className="bg-gray-50">
               <td className="border-t border-gray-300 p-1 align-top">
                 <div className="underline font-light">Memo</div>
@@ -288,6 +311,7 @@ export function RosterSummary({
                 );
               })}
             </tr>
+
             <tr>
               <td colSpan={8} className="p-1">
                 <div className="underline font-light">Remark</div>

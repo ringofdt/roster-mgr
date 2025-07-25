@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Field, Label, Switch } from "@headlessui/react";
-import { domToPng, domToJpeg } from "modern-screenshot";
+import { toPng } from "html-to-image";
+import download from "downloadjs";
 import dayjs from "dayjs";
 import { type Worker, type Day, type DailyMemo, days } from "./types";
 import { BadgeOpening, BadgeClosing, BreakBadge } from "./Badges";
@@ -43,34 +44,29 @@ export function RosterSummary({
   const endDate = Object.values(weekDates).at(-1);
   const weekRange = `${dayjs(startDate).format("DD MMM")} - ${dayjs(endDate).format("DD MMM")}`;
 
-  const exportAsImage = async (format: "png" | "jpg" = "png") => {
-    if (!rosterRef.current) return;
-
-    try {
-      const options = {
-        scale: 2,
-        backgroundColor: "#ffffff",
-      };
-
-      let dataUrl;
-      if (format === "jpg") {
-        dataUrl = await domToJpeg(rosterRef.current, options);
-      } else {
-        dataUrl = await domToPng(rosterRef.current, options);
-      }
-
-      const link = document.createElement("a");
-      link.download = `roster-summary-${dayjs(startDate).format("YYYY-MM-DD")}.${format}`;
-      link.href = dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error exporting image:", error);
-      alert("Error exporting image. Please try again.");
-    } finally {
+  const exportSummaryAsPNG = async () => {
+    const element = document.getElementById("roster-summary");
+    const pngOptions = { backgroundColor: "#FFFFFF" };
+    if (element) {
+      toPng(element, pngOptions)
+        .then((dataUrl: string) => {
+          // Create a download link and trigger download
+          // const link = document.createElement("a");
+          // link.download = `roster-summary-${dayjs(startDate).format("YYYY-MM-DD")}.png`;
+          // link.href = dataUrl;
+          // link.click();
+          const filename = `roster-summary-${dayjs(startDate).format("YYYY-MM-DD")}.png`;
+          download(dataUrl, filename, "image/png");
+        })
+        .catch((error) => {
+          console.error("Could not export table:", error);
+          alert("Error exporting image. Please try again.");
+        });
+    } else {
+      alert("table not found");
     }
   };
+
   const weekTotalHours = Object.values(dailyHours).reduce(
     (sum, val) => sum + val,
     0,
@@ -92,14 +88,14 @@ export function RosterSummary({
 
         <button
           id="export-button"
-          onClick={() => exportAsImage("png")}
+          onClick={() => exportSummaryAsPNG()}
           className="flex gap-1 items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
         >
           <CameraIcon className="size-5" />
           <span> Export as Image</span>
         </button>
       </div>
-      <div ref={rosterRef} className="p-3">
+      <div id="roster-summary" ref={rosterRef} className="p-3">
         <div className="grid grid-cols-3 items-end mb-1 ">
           <div>
             <div className="px-2 py-1 rounded ">
@@ -119,9 +115,9 @@ export function RosterSummary({
         <table className="w-full border-none table-fixed text-sm lg:text-base text-gray-800">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border-0 p-1 w-[120px]">Team</th>
+              <th className="border-0 p-1 w-[110px]">Team</th>
               {days.map((day) => (
-                <th key={day} className="border-0 p-1 text-center" style={{}}>
+                <th key={day} className="border-0 p-0.5 text-center" style={{}}>
                   <div className="flex flex-col gap-0">
                     <span className="capitalize">{day.toUpperCase()}</span>
                     <span className="text-xs font-normal">
@@ -163,7 +159,7 @@ export function RosterSummary({
                     return (
                       <td
                         key={day}
-                        className="border-t border-l border-gray-300 p-1 align-center"
+                        className=" border-t border-l border-gray-300 p-1 align-center"
                         style={{}}
                       >
                         {!shift.editable && (
@@ -181,16 +177,16 @@ export function RosterSummary({
                       style={{}}
                     >
                       <div className="flex flex-col gap-1 pb-1 h-full">
-                        <div className="flex flex-wrap md:flex-nowrap justify-between items-center gap-1 ">
+                        <div className="flex flex-nowrap justify-between items-center ">
                           {shift.role && (
-                            <div className="font-medium text-[0.9em] break-all">
+                            <span className="font-medium text-[0.9em] break-all">
                               {shift.role}
-                            </div>
+                            </span>
                           )}
                         </div>
                         <div className="flex items-center">
                           {shift.startTime && shift.endTime && (
-                            <div className="flex flex-wrap text-[0.9em]">
+                            <div className="flex flex-nowrap text-[0.9em]">
                               <div className="">
                                 <span
                                   className={`rounded px-0.5 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}

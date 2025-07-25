@@ -14,9 +14,9 @@
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
     "dayjs": "^1.11.13",
-    "html2canvas": "^1.4.1",
+    "downloadjs": "^1.4.7",
+    "html-to-image": "^1.11.13",
     "isbot": "^5.1.27",
-    "modern-screenshot": "^4.6.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router": "^7.5.3"

@@ -542,14 +542,6 @@ export default function RosterApp(): React.JSX.Element {
                   </div>
                 </div>
               </div>
-              <div>
-                <button
-                  onClick={updateShiftHours}
-                  className="flex items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
-                >
-                  <span>Calculate Hours</span>
-                </button>
-              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2 ">

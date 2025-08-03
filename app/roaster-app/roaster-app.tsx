@@ -218,10 +218,9 @@ export default function RosterApp(): React.JSX.Element {
   };
 
   const decrementWeek = () => {
-    const prevWeek = selectedWeek - 1;
-    const currentWeekStart = getWeekStartDate(selectedYear, selectedWeek);
-    const prevWeekDate = getWeekStartDate(selectedYear, selectedWeek - 1);
-    prevWeekDate.setDate(currentWeekStart.getDate() - 7);
+    const selectedWeekDate = getWeekStartDate(selectedYear, selectedWeek);
+    let prevWeekDate = new Date(selectedWeekDate);
+    prevWeekDate.setDate(selectedWeekDate.getDate() - 7);
     const { year, week } = getFinancialYearAndWeek(prevWeekDate);
     setSelectedYear(year);
     setSelectedWeek(week);

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Field, Label, Switch } from "@headlessui/react";
 import { toPng } from "html-to-image";
-import download from "downloadjs";
+import downloadjs from "downloadjs";
 import dayjs from "dayjs";
 import { type Worker, type Day, type DailyMemo, days } from "./types";
 import { BadgeOpening, BadgeClosing, BreakBadge } from "./Badges";
@@ -21,6 +21,7 @@ interface RosterSummaryProps {
   weekDates: Record<Day, Date>;
   rosterTitle: string;
   rosterSubTitle: string;
+  calculateBreaks: (hours: number) => string[];
 }
 
 export function RosterSummary({
@@ -33,6 +34,7 @@ export function RosterSummary({
   weekDates,
   rosterTitle,
   rosterSubTitle,
+  calculateBreaks,
 }: RosterSummaryProps) {
   const rosterRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +58,7 @@ export function RosterSummary({
           // link.href = dataUrl;
           // link.click();
           const filename = `roster-summary-${dayjs(startDate).format("YYYY-MM-DD")}.png`;
-          download(dataUrl, filename, "image/png");
+          downloadjs(dataUrl, filename, "image/png");
         })
         .catch((error) => {
           console.error("Could not export table:", error);
@@ -210,9 +212,9 @@ export function RosterSummary({
                           )}
                         </div>
                         <div className="flex flex-row flex-wrap gap-1">
-                          {shift.hours >= 4 && <BreakBadge text="PB" />}
-                          {shift.hours >= 5 && <BreakBadge text="MB" />}
-                          {shift.hours >= 10 && <BreakBadge text="MB2" />}
+                          {calculateBreaks(shift.hours).map((b) => (
+                            <BreakBadge text={b} />
+                          ))}
                         </div>
                         {showHours && (
                           <div className="mt-auto">
@@ -325,6 +327,12 @@ export function RosterSummary({
                   </div>
                   <div className="flex flex-wrap items-center gap-1">
                     <BreakBadge text="MB" /> <span>Meal Break</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <BreakBadge text="PB2" />{" "}
+                    <span>
+                      2<sup>nd</sup> Paid Break
+                    </span>
                   </div>
                   <div className="flex flex-wrap items-center gap-1">
                     <BreakBadge text="MB2" />{" "}

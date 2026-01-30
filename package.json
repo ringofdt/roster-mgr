@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
+    "@types/downloadjs": "^1.4.6",
     "dayjs": "^1.11.13",
     "downloadjs": "^1.4.7",
     "html-to-image": "^1.11.13",
@@ -24,7 +25,6 @@
   "devDependencies": {
     "@react-router/dev": "^7.5.3",
     "@tailwindcss/vite": "^4.1.4",
-    "@types/html2canvas": "^1.0.0",
     "@types/node": "^20",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",

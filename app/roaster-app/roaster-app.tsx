@@ -51,6 +51,13 @@ const defaultRoleList: string[] = [
   "Closing",
 ];
 
+const defaultBreakMinHours: Record<string, number> = {
+  PB: 4,
+  MB: 5,
+  PB2: 9.5,
+  MB2: 10,
+};
+
 function generateTimeOptions(start: string, end: string): string[] {
   const options: string[] = [];
   const [sh, sm] = start.split(":").map(Number);
@@ -161,6 +168,8 @@ export default function RosterApp(): React.JSX.Element {
     useState<Record<Day, string>>(defaultStartTimes);
   const [endTimes, setEndTimes] =
     useState<Record<Day, string>>(defaultEndTimes);
+  const [breakMinHours, setBreakMinHours] =
+    useState<Record<string, number>>(defaultBreakMinHours);
 
   const [newWorkerName, setNewWorkerName] = useState<string>("");
   const [newWorkerTitle, setNewWorkerTitle] = useState<string>("");
@@ -168,6 +177,21 @@ export default function RosterApp(): React.JSX.Element {
   const [newWorkerDays, setNewWorkerDays] = useState<Record<Day, boolean>>(
     Object.fromEntries(days.map((d) => [d, true])) as Record<Day, boolean>,
   );
+
+  const calculateBreaks = (hours: number): string[] => {
+    const result: string[] = [];
+
+    const breaks: string[] = ["PB", "MB", "MB2", "PB2"];
+
+    for (const b of breaks) {
+      if (b == "PB2" && result.includes("MB2")) break;
+      const minHours = breakMinHours[b];
+      if (minHours > 0 && hours >= minHours) {
+        result.push(b);
+      }
+    }
+    return result;
+  };
 
   // Year and Week state
   const currentWeekInfo = getCurrentWeekInfo();
@@ -372,6 +396,7 @@ export default function RosterApp(): React.JSX.Element {
       roles: roleList,
       startTimes: startTimes,
       endTimes: endTimes,
+      breakMinHours: breakMinHours,
       workers: workers,
       dailyMemos: dailyMemos,
       rosterInfo: {
@@ -412,6 +437,9 @@ export default function RosterApp(): React.JSX.Element {
 
         if (settings.endTimes) {
           setEndTimes(settings.endTimes);
+        }
+        if (settings.breakMinHours) {
+          setBreakMinHours(settings.breakMinHours);
         }
 
         if (settings.workers && Array.isArray(settings.workers)) {
@@ -511,7 +539,9 @@ export default function RosterApp(): React.JSX.Element {
                     onClick={saveSettingsToFile}
                     className="flex items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
                   >
-                    <span>Save Settings</span>
+                    <span className="text-xs sm:text-sm md:text-md">
+                      Save Settings
+                    </span>
                   </button>
                   <div
                     className=" flex-1 justify-center rounded-lg w-80% border border-dashed border-gray-900/25 px-3 py-2 bg-gray-200 hover:bg-gray-100 transition-colors"
@@ -523,7 +553,7 @@ export default function RosterApp(): React.JSX.Element {
                         htmlFor="settings-file-input"
                         className="relative "
                       >
-                        <span className="p-1 hover:outline border rounded cursor-pointer">
+                        <span className="text-xs p-1 hover:outline border rounded cursor-pointer">
                           Load Settings
                         </span>
 
@@ -535,45 +565,178 @@ export default function RosterApp(): React.JSX.Element {
                           onChange={loadSettingsFromFile}
                           className="sr-only"
                         />
+                        <span className="pl-1">or drag and drop</span>
                       </label>
-                      <span className="pl-1">or drag and drop</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 ">
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold">Member</label>
-                <div className="flex items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
-                  <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
-                    <XMarkIcon className="hidden size-3" />
-                  </div>
-                  <input
-                    type="text"
-                    value={newWorkerName}
-                    onChange={(e) => setNewWorkerName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addWorkerRow();
-                      }
-                    }}
-                    className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
-                    placeholder="Name"
-                  />
-                  <div className="flex shrink-0 items-center focus-within:relative">
-                    <button
-                      onClick={addWorkerRow}
-                      className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
+            <div className="grid grid-rows-1 gap-2 ">
+              <div className=" gap-1">
+                <label className="font-semibold">Shifts</label>
+                <div className="flex flex-wrap gap-1">
+                  {days.map((day) => (
+                    <div
+                      key={day}
+                      className="flex items-right flex-col gap-1 text-sm"
                     >
-                      <PlusCircleIcon className=" size-5" />
-                      <span>Add </span>
-                    </button>
+                      <label className="w-18">{day}</label>
+                      <input
+                        type="time"
+                        value={startTimes[day]}
+                        onChange={(e) =>
+                          setStartTimes({
+                            ...startTimes,
+                            [day]: e.target.value,
+                          })
+                        }
+                        className="w-20 border rounded px-1 py-1"
+                      />
+                      <input
+                        type="time"
+                        value={endTimes[day]}
+                        onChange={(e) =>
+                          setEndTimes({ ...endTimes, [day]: e.target.value })
+                        }
+                        className="w-20 border rounded px-1 py-1"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className=" gap-1">
+                <label className="font-semibold">Breaks' Shift Hours</label>
+                <div className="flex flex-wrap md:flex-row md:flex-wrap gap-1">
+                  {["PB", "MB", "PB2", "MB2"].map((b) => (
+                    <div
+                      key={b}
+                      className="flex items-left flex-col gap-1 text-sm"
+                    >
+                      <label className="w-18">{b}</label>
+                      <div className="flex items-center gap-1 rounded-sm outline-1 p-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={breakMinHours[b]}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) =>
+                            setBreakMinHours({
+                              ...breakMinHours,
+                              [b]: parseFloat(e.target.value) || 0.0,
+                            })
+                          }
+                          className="w-10 border-0 rounded p-0 text-center  focus:outline-none"
+                        />
+                        <div className="grid shrink-0 grid-cols-1 focus-within:relative">
+                          hrs
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1 ">
+                <label className="font-semibold">Roles</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2">
+                  <div>
+                    <div className="flex w-full sm:w-80 items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                      <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                        <XMarkIcon className="hidden size-3" />
+                      </div>
+                      <input
+                        type="text"
+                        name="newRole"
+                        onChange={(e) => setNewRole(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && newRole.trim()) {
+                            e.preventDefault();
+                            if (!roleList.includes(newRole.trim())) {
+                              setRoleList([...roleList, newRole.trim()]);
+                              setNewRole("");
+                            }
+                          }
+                        }}
+                        className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
+                        placeholder="Role"
+                      />
+                      <div className="flex shrink-0 items-center focus-within:relative">
+                        <button
+                          className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
+                          onClick={() => {
+                            if (
+                              newRole.trim() &&
+                              !roleList.includes(newRole.trim())
+                            ) {
+                              setRoleList([...roleList, newRole.trim()]);
+                              setNewRole("");
+                            }
+                          }}
+                        >
+                          <PlusCircleIcon className=" size-5" />
+                          <span>Add </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-row flex-wrap gap-2">
+                    {roleList.map((role, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center bg-gray-50 px-1 py-1 rounded text-sm  text-gray-600 ring-1"
+                      >
+                        <span className="mr-1">{role}</span>
+                        <button
+                          className="cursor-pointer text-red-400 hover:text-red-600"
+                          onClick={() => {
+                            const updated = [...roleList];
+                            updated.splice(idx, 1);
+                            setRoleList(updated);
+                          }}
+                        >
+                          <XCircleIcon className="size-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="grid gap-1 px-2">
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold">Member</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2">
+                  <div>
+                    <div className="flex w-full sm:w-80 items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                      <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                        <XMarkIcon className="hidden size-3" />
+                      </div>
+                      <input
+                        type="text"
+                        value={newWorkerName}
+                        onChange={(e) => setNewWorkerName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addWorkerRow();
+                          }
+                        }}
+                        className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
+                        placeholder="Name"
+                      />
+                      <div className="flex shrink-0 items-center focus-within:relative">
+                        <button
+                          onClick={addWorkerRow}
+                          className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
+                        >
+                          <PlusCircleIcon className=" size-5" />
+                          <span>Add </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   <div className=" flex flex-row flex-wrap gap-2">
                     {days.map((day) => (
                       <Field
@@ -605,136 +768,43 @@ export default function RosterApp(): React.JSX.Element {
                   </div>
                 </div>
               </div>
-
-              <div className="flex flex-col gap-1 ">
-                <label className="font-semibold">Roles</label>
-                <div className="flex items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
-                  <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
-                    <XMarkIcon className="hidden size-3" />
-                  </div>
-                  <input
-                    type="text"
-                    name="newRole"
-                    onChange={(e) => setNewRole(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && newRole.trim()) {
-                        e.preventDefault();
-                        if (!roleList.includes(newRole.trim())) {
-                          setRoleList([...roleList, newRole.trim()]);
-                          setNewRole("");
-                        }
-                      }
-                    }}
-                    className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
-                    placeholder="Role"
-                  />
-                  <div className="flex shrink-0 items-center focus-within:relative">
-                    <button
-                      className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
-                      onClick={() => {
-                        if (
-                          newRole.trim() &&
-                          !roleList.includes(newRole.trim())
-                        ) {
-                          setRoleList([...roleList, newRole.trim()]);
-                          setNewRole("");
-                        }
-                      }}
-                    >
-                      <PlusCircleIcon className=" size-5" />
-                      <span>Add </span>
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {roleList.map((role, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center bg-gray-50 px-1 py-1 rounded text-sm  text-gray-600 ring-1"
-                    >
-                      <span className="mr-1">{role}</span>
-                      <button
-                        className="cursor-pointer text-red-400 hover:text-red-600"
-                        onClick={() => {
-                          const updated = [...roleList];
-                          updated.splice(idx, 1);
-                          setRoleList(updated);
-                        }}
-                      >
-                        <XCircleIcon className="size-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className=" gap-1">
-                <label className="font-semibold">Shifts</label>
-                <div className="flex flex-col md:flex-row md:flex-wrap gap-1">
-                  {days.map((day) => (
-                    <div
-                      key={day}
-                      className="flex items-center md:flex-col gap-1 text-sm"
-                    >
-                      <label className="w-18">{day}</label>
-                      <input
-                        type="time"
-                        value={startTimes[day]}
-                        onChange={(e) =>
-                          setStartTimes({
-                            ...startTimes,
-                            [day]: e.target.value,
-                          })
-                        }
-                        className="w-full border rounded px-1 py-1"
-                      />
-                      <input
-                        type="time"
-                        value={endTimes[day]}
-                        onChange={(e) =>
-                          setEndTimes({ ...endTimes, [day]: e.target.value })
-                        }
-                        className="w-full border rounded px-1 py-1"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-2 flex gap-2">
-        <div className="grid grid-cols-2 w-1/3 md:flex  gap-1 ">
-          <div className="flex flex-col gap-1">
-            <label className=" text-xs px-1">Year</label>
-            <input
-              type="number"
-              value={selectedYear}
-              onChange={(e) => {
-                setSelectedYear(
-                  parseInt(e.target.value) || new Date().getFullYear(),
-                );
-              }}
-              min="2020"
-              max="2050"
-              className="border rounded px-2 py-1"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="block text-xs px-1">Week</label>
-            <input
-              type="number"
-              value={selectedWeek}
-              onChange={(e) => setSelectedWeek(parseInt(e.target.value) || 1)}
-              min="1"
-              max="53"
-              className="border rounded px-2 py-1 "
-            />
+      <div className="p-2 flex flex-wrap gap-3">
+        <div className="flex flex-row w-full md:w-1/3 gap-1 ">
+          <div className="flex flex-row gap-1">
+            <div className="flex flex-col gap-1">
+              <label className=" text-xs px-1">Year</label>
+              <input
+                type="number"
+                value={selectedYear}
+                onChange={(e) => {
+                  setSelectedYear(
+                    parseInt(e.target.value) || new Date().getFullYear(),
+                  );
+                }}
+                min="2020"
+                max="2050"
+                className="w-18 border rounded px-1 py-1"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="block text-xs px-1">Week</label>
+              <input
+                type="number"
+                value={selectedWeek}
+                onChange={(e) => setSelectedWeek(parseInt(e.target.value) || 1)}
+                min="1"
+                max="53"
+                className="w-12 border rounded px-1 py-1 "
+              />
+            </div>
           </div>
 
-          <div className="grid col-span-2 md:col-span-1 gap-1">
+          <div className=" flex flex-col gap-1">
             <label className="block text-xs px-1">&nbsp;</label>
             <div className="flex flex-row gap-0.5 w-full">
               <button
@@ -768,8 +838,8 @@ export default function RosterApp(): React.JSX.Element {
             </div>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row w-2/3 gap-1">
-          <div className="flex flex-col gap-1 md:w-1/2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 grow gap-1">
+          <div className="flex flex-col w-full gap-1 ">
             <label className="block text-xs px-1">Title</label>
             <input
               type="text"
@@ -779,7 +849,7 @@ export default function RosterApp(): React.JSX.Element {
               className="border rounded px-2 py-1 "
             />
           </div>
-          <div className="flex flex-col gap-1 md:w-1/2">
+          <div className="flex flex-col w-full gap-1 ">
             <label className="block text-xs px-1">Subtitle</label>
             <input
               type="text"
@@ -984,9 +1054,9 @@ export default function RosterApp(): React.JSX.Element {
                                 </Select>
                               </div>
                               <div className="flex gap-0.5 items-center">
-                                {shift.hours >= 4 && <BreakBadge text="PB" />}
-                                {shift.hours >= 5 && <BreakBadge text="MB" />}
-                                {shift.hours >= 10 && <BreakBadge text="MB2" />}
+                                {calculateBreaks(shift.hours).map((b) => (
+                                  <BreakBadge text={b} />
+                                ))}
                               </div>
                               <div>
                                 {false && shift.hours >= 4 && (
@@ -1097,6 +1167,7 @@ export default function RosterApp(): React.JSX.Element {
         weekDates={weekDates}
         rosterTitle={rosterTitle}
         rosterSubTitle={rosterSubTitle}
+        calculateBreaks={calculateBreaks}
       />
 
       <div className="mt-5">

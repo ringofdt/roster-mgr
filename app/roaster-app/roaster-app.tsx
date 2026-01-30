@@ -729,38 +729,35 @@ export default function RosterApp(): React.JSX.Element {
                       <div className="flex flex-col gap-1">
                         <label className="font-semibold">Member</label>
 
-                        <div className="flex flex-row gap-2">
-                          <div className="">
-                            <div className="flex w-full sm:w-80 items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
-                              <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
-                                <XMarkIcon className="hidden size-3" />
-                              </div>
-                              <input
-                                type="text"
-                                value={newWorkerName}
-                                onChange={(e) =>
-                                  setNewWorkerName(e.target.value)
+                        <div className="flex flex-row flex-wrap gap-2">
+                          <div className="flex w-full sm:w-80 items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                            <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                              <XMarkIcon className="hidden size-3" />
+                            </div>
+                            <input
+                              type="text"
+                              value={newWorkerName}
+                              onChange={(e) => setNewWorkerName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addWorkerRow();
                                 }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    addWorkerRow();
-                                  }
-                                }}
-                                className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
-                                placeholder="Name"
-                              />
-                              <div className="flex shrink-0 items-center focus-within:relative">
-                                <button
-                                  onClick={addWorkerRow}
-                                  className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
-                                >
-                                  <PlusCircleIcon className=" size-5" />
-                                  <span>Add </span>
-                                </button>
-                              </div>
+                              }}
+                              className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
+                              placeholder="Name"
+                            />
+                            <div className="flex shrink-0 items-center focus-within:relative">
+                              <button
+                                onClick={addWorkerRow}
+                                className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
+                              >
+                                <PlusCircleIcon className=" size-5" />
+                                <span>Add </span>
+                              </button>
                             </div>
                           </div>
+
                           <div className=" flex flex-row flex-wrap gap-2">
                             {days.map((day) => (
                               <Field

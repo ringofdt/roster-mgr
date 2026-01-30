@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
-import { Select, Checkbox, Label, Field } from "@headlessui/react";
+import clsx from "clsx";
+import {
+  Select,
+  Checkbox,
+  Label,
+  Field,
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+} from "@headlessui/react";
 import {
   ArrowPathIcon,
   XCircleIcon,
@@ -9,6 +18,7 @@ import {
   CursorArrowRaysIcon,
   PlusIcon,
   MinusIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 
 import {
@@ -531,248 +541,265 @@ export default function RosterApp(): React.JSX.Element {
       <div className="">
         <div className="p-2 space-y-4">
           <div className="flex flex-col gap-4 pb-4 border-b">
-            <div className="">
-              <div className="flex flex-col gap-2">
-                <label className="font-semibold">Settings File</label>
-                <div className="flex gap-2 items-center">
-                  <button
-                    onClick={saveSettingsToFile}
-                    className="flex items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
-                  >
-                    <span className="text-xs sm:text-sm md:text-md">
-                      Save Settings
-                    </span>
-                  </button>
-                  <div
-                    className=" flex-1 justify-center rounded-lg w-80% border border-dashed border-gray-900/25 px-3 py-2 bg-gray-200 hover:bg-gray-100 transition-colors"
-                    onDrop={handleSettingsDrop}
-                    onDragOver={handleSettingsDragOver}
-                  >
-                    <div className="flex text-sm/6 text-gray-600">
-                      <label
-                        htmlFor="settings-file-input"
-                        className="relative "
-                      >
-                        <span className="text-xs p-1 hover:outline border rounded cursor-pointer">
-                          Load Settings
-                        </span>
+            <div className="flex flex-col gap-2 ">
+              <label className="font-semibold"></label>
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={saveSettingsToFile}
+                  className="flex items-center p-1 text-gray-600 hover:outline border rounded cursor-pointer"
+                >
+                  <span className="text-xs sm:text-sm md:text-md">
+                    Save Settings
+                  </span>
+                </button>
+                <div
+                  className=" flex-1 justify-center rounded-lg w-80% border border-dashed border-gray-900/25 px-3 py-2 bg-gray-200 hover:bg-gray-100 transition-colors"
+                  onDrop={handleSettingsDrop}
+                  onDragOver={handleSettingsDragOver}
+                >
+                  <div className="flex text-sm/6 text-gray-600">
+                    <label htmlFor="settings-file-input" className="relative ">
+                      <span className="text-xs p-1 hover:outline border rounded cursor-pointer">
+                        Load Settings
+                      </span>
 
-                        <input
-                          id="settings-file-input"
-                          name="settings-file-input"
-                          type="file"
-                          accept=".json"
-                          onChange={loadSettingsFromFile}
-                          className="sr-only"
-                        />
-                        <span className="pl-1">or drag and drop</span>
-                      </label>
-                    </div>
+                      <input
+                        id="settings-file-input"
+                        name="settings-file-input"
+                        type="file"
+                        accept=".json"
+                        onChange={loadSettingsFromFile}
+                        className="sr-only"
+                      />
+                      <span className="pl-1">or drag and drop</span>
+                    </label>
                   </div>
                 </div>
               </div>
             </div>
+            <Disclosure>
+              {({ open }) => (
+                <>
+                  <DisclosureButton className="flex items-center gap-2">
+                    show settings
+                    <ChevronRightIcon
+                      className={clsx("w-5", open && "rotate-90")}
+                    />
+                  </DisclosureButton>
+                  <DisclosurePanel
+                    transition
+                    className=" origin-top transition duration-200 ease-out data-closed:-translate-y-6 data-closed:opacity-0"
+                  >
+                    <div className="flex flex-col gap-2 bg-gray-100 px-2 py-3">
+                      <div className=" gap-1">
+                        <label className="font-semibold">Shifts</label>
+                        <div className="flex flex-wrap gap-1">
+                          {days.map((day) => (
+                            <div
+                              key={day}
+                              className="flex items-right flex-col gap-1 text-sm"
+                            >
+                              <label className="w-18">{day}</label>
+                              <input
+                                type="time"
+                                value={startTimes[day]}
+                                onChange={(e) =>
+                                  setStartTimes({
+                                    ...startTimes,
+                                    [day]: e.target.value,
+                                  })
+                                }
+                                className="w-20 border rounded px-1 py-1"
+                              />
+                              <input
+                                type="time"
+                                value={endTimes[day]}
+                                onChange={(e) =>
+                                  setEndTimes({
+                                    ...endTimes,
+                                    [day]: e.target.value,
+                                  })
+                                }
+                                className="w-20 border rounded px-1 py-1"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-            <div className="grid grid-rows-1 gap-2 ">
-              <div className=" gap-1">
-                <label className="font-semibold">Shifts</label>
-                <div className="flex flex-wrap gap-1">
-                  {days.map((day) => (
-                    <div
-                      key={day}
-                      className="flex items-right flex-col gap-1 text-sm"
-                    >
-                      <label className="w-18">{day}</label>
-                      <input
-                        type="time"
-                        value={startTimes[day]}
-                        onChange={(e) =>
-                          setStartTimes({
-                            ...startTimes,
-                            [day]: e.target.value,
-                          })
-                        }
-                        className="w-20 border rounded px-1 py-1"
-                      />
-                      <input
-                        type="time"
-                        value={endTimes[day]}
-                        onChange={(e) =>
-                          setEndTimes({ ...endTimes, [day]: e.target.value })
-                        }
-                        className="w-20 border rounded px-1 py-1"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+                      <div className=" gap-1">
+                        <label className="font-semibold">
+                          Breaks' Shift Hours
+                        </label>
+                        <div className="flex flex-wrap md:flex-row md:flex-wrap gap-1">
+                          {["PB", "MB", "PB2", "MB2"].map((b) => (
+                            <div
+                              key={b}
+                              className="flex items-left flex-col gap-1 text-sm"
+                            >
+                              <label className="w-18">{b}</label>
+                              <div className="flex items-center gap-1 rounded-sm outline-1 p-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  value={breakMinHours[b]}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) =>
+                                    setBreakMinHours({
+                                      ...breakMinHours,
+                                      [b]: parseFloat(e.target.value) || 0.0,
+                                    })
+                                  }
+                                  className="w-10 border-0 rounded p-0 text-center  focus:outline-none"
+                                />
+                                <div className="grid shrink-0 grid-cols-1 focus-within:relative">
+                                  hrs
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-              <div className=" gap-1">
-                <label className="font-semibold">Breaks' Shift Hours</label>
-                <div className="flex flex-wrap md:flex-row md:flex-wrap gap-1">
-                  {["PB", "MB", "PB2", "MB2"].map((b) => (
-                    <div
-                      key={b}
-                      className="flex items-left flex-col gap-1 text-sm"
-                    >
-                      <label className="w-18">{b}</label>
-                      <div className="flex items-center gap-1 rounded-sm outline-1 p-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={breakMinHours[b]}
-                          onFocus={(e) => e.target.select()}
-                          onChange={(e) =>
-                            setBreakMinHours({
-                              ...breakMinHours,
-                              [b]: parseFloat(e.target.value) || 0.0,
-                            })
-                          }
-                          className="w-10 border-0 rounded p-0 text-center  focus:outline-none"
-                        />
-                        <div className="grid shrink-0 grid-cols-1 focus-within:relative">
-                          hrs
+                      <div className="flex flex-col gap-1 ">
+                        <label className="font-semibold">Roles</label>
+
+                        <div className="flex w-full">
+                          <div className="flex w-full sm:w-80 items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                            <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                              <XMarkIcon className="hidden size-3" />
+                            </div>
+                            <input
+                              type="text"
+                              name="newRole"
+                              onChange={(e) => setNewRole(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && newRole.trim()) {
+                                  e.preventDefault();
+                                  if (!roleList.includes(newRole.trim())) {
+                                    setRoleList([...roleList, newRole.trim()]);
+                                    setNewRole("");
+                                  }
+                                }
+                              }}
+                              className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
+                              placeholder="Role"
+                            />
+                            <div className="flex shrink-0 items-center focus-within:relative">
+                              <button
+                                className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
+                                onClick={() => {
+                                  if (
+                                    newRole.trim() &&
+                                    !roleList.includes(newRole.trim())
+                                  ) {
+                                    setRoleList([...roleList, newRole.trim()]);
+                                    setNewRole("");
+                                  }
+                                }}
+                              >
+                                <PlusCircleIcon className=" size-5" />
+                                <span>Add </span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-row flex-wrap gap-2">
+                          {roleList.map((role, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center bg-gray-50 px-1 py-1 rounded text-sm  text-gray-600 ring-1"
+                            >
+                              <span className="mr-1">{role}</span>
+                              <button
+                                className="cursor-pointer text-red-400 hover:text-red-600"
+                                onClick={() => {
+                                  const updated = [...roleList];
+                                  updated.splice(idx, 1);
+                                  setRoleList(updated);
+                                }}
+                              >
+                                <XCircleIcon className="size-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="font-semibold">Member</label>
+
+                        <div className="flex flex-row gap-2">
+                          <div className="">
+                            <div className="flex w-full sm:w-80 items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
+                              <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
+                                <XMarkIcon className="hidden size-3" />
+                              </div>
+                              <input
+                                type="text"
+                                value={newWorkerName}
+                                onChange={(e) =>
+                                  setNewWorkerName(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addWorkerRow();
+                                  }
+                                }}
+                                className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
+                                placeholder="Name"
+                              />
+                              <div className="flex shrink-0 items-center focus-within:relative">
+                                <button
+                                  onClick={addWorkerRow}
+                                  className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
+                                >
+                                  <PlusCircleIcon className=" size-5" />
+                                  <span>Add </span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          <div className=" flex flex-row flex-wrap gap-2">
+                            {days.map((day) => (
+                              <Field
+                                key={day}
+                                className="px-1 border rounded items-center flex border-gray-400"
+                              >
+                                <Checkbox
+                                  checked={newWorkerDays[day]}
+                                  onChange={() => toggleDayForNewWorker(day)}
+                                  className="group block size-4 mr-0.5 rounded border bg-white data-checked:bg-sky-600"
+                                >
+                                  {/* Checkmark icon */}
+                                  <svg
+                                    className="stroke-white opacity-0 group-data-checked:opacity-100"
+                                    viewBox="0 0 14 14"
+                                    fill="none"
+                                  >
+                                    <path
+                                      d="M3 8L6 11L11 3.5"
+                                      strokeWidth={2}
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </Checkbox>
+                                <Label>{day}</Label>
+                              </Field>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1 ">
-                <label className="font-semibold">Roles</label>
-
-                <div className="flex w-full">
-                  <div className="flex w-full sm:w-80 items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
-                    <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
-                      <XMarkIcon className="hidden size-3" />
-                    </div>
-                    <input
-                      type="text"
-                      name="newRole"
-                      onChange={(e) => setNewRole(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && newRole.trim()) {
-                          e.preventDefault();
-                          if (!roleList.includes(newRole.trim())) {
-                            setRoleList([...roleList, newRole.trim()]);
-                            setNewRole("");
-                          }
-                        }
-                      }}
-                      className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
-                      placeholder="Role"
-                    />
-                    <div className="flex shrink-0 items-center focus-within:relative">
-                      <button
-                        className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
-                        onClick={() => {
-                          if (
-                            newRole.trim() &&
-                            !roleList.includes(newRole.trim())
-                          ) {
-                            setRoleList([...roleList, newRole.trim()]);
-                            setNewRole("");
-                          }
-                        }}
-                      >
-                        <PlusCircleIcon className=" size-5" />
-                        <span>Add </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-row flex-wrap gap-2">
-                  {roleList.map((role, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center bg-gray-50 px-1 py-1 rounded text-sm  text-gray-600 ring-1"
-                    >
-                      <span className="mr-1">{role}</span>
-                      <button
-                        className="cursor-pointer text-red-400 hover:text-red-600"
-                        onClick={() => {
-                          const updated = [...roleList];
-                          updated.splice(idx, 1);
-                          setRoleList(updated);
-                        }}
-                      >
-                        <XCircleIcon className="size-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="font-semibold">Member</label>
-
-                <div className="flex flex-row gap-2">
-                  <div className="">
-                    <div className="flex w-full sm:w-80 items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 has-[input:focus-within]:outline-2 has-[input:focus-within]:-outline-offset-2">
-                      <div className="shrink-0 text-base text-gray-500 select-none sm:text-sm/6">
-                        <XMarkIcon className="hidden size-3" />
-                      </div>
-                      <input
-                        type="text"
-                        value={newWorkerName}
-                        onChange={(e) => setNewWorkerName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addWorkerRow();
-                          }
-                        }}
-                        className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
-                        placeholder="Name"
-                      />
-                      <div className="flex shrink-0 items-center focus-within:relative">
-                        <button
-                          onClick={addWorkerRow}
-                          className="flex gap-1 items-center px-2 py-1 text-gray-600  cursor-pointer hover:bg-gray-100/60"
-                        >
-                          <PlusCircleIcon className=" size-5" />
-                          <span>Add </span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className=" flex flex-row flex-wrap gap-2">
-                    {days.map((day) => (
-                      <Field
-                        key={day}
-                        className="px-1 border rounded items-center flex border-gray-400"
-                      >
-                        <Checkbox
-                          checked={newWorkerDays[day]}
-                          onChange={() => toggleDayForNewWorker(day)}
-                          className="group block size-4 mr-0.5 rounded border bg-white data-checked:bg-sky-600"
-                        >
-                          {/* Checkmark icon */}
-                          <svg
-                            className="stroke-white opacity-0 group-data-checked:opacity-100"
-                            viewBox="0 0 14 14"
-                            fill="none"
-                          >
-                            <path
-                              d="M3 8L6 11L11 3.5"
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </Checkbox>
-                        <Label>{day}</Label>
-                      </Field>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+                  </DisclosurePanel>
+                </>
+              )}
+            </Disclosure>
           </div>
         </div>
       </div>
-
       <div className="p-2 flex flex-wrap gap-3">
         <div className="flex flex-row w-full md:w-1/3 gap-1 ">
           <div className="flex flex-row gap-1">

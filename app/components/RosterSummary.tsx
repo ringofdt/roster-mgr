@@ -74,7 +74,7 @@ export function RosterSummary({
     0,
   );
   return (
-    <div className="p-4 text-gray-800 mt-4">
+    <div className="px-1 py-4 text-gray-800 mt-4">
       {/* Export Button */}
       <div className="flex justify-end mb-4 gap-3">
         <Field className="flex items-center gap-1">
@@ -179,28 +179,37 @@ export function RosterSummary({
                       style={{}}
                     >
                       <div className="flex flex-col gap-1 pb-1 h-full">
-                        <div className="flex flex-nowrap justify-between items-center ">
-                          {shift.role && (
-                            <span className="font-medium text-[0.9em] break-all">
+                        <div className="flex flex-wrap items-left ">
+                          {false && shift.role && (
+                            <span className="font-medium text-[0.9em] break-words">
                               {shift.role}
                             </span>
                           )}
+                          {shift.role &&
+                            shift.role.split(/(?=\/)/).map((part, i, arr) => (
+                              <span
+                                key={i}
+                                className="whitespace-nowrap break-words"
+                              >
+                                {part}
+                              </span>
+                            ))}
                         </div>
                         <div className="flex items-center">
                           {shift.startTime && shift.endTime && (
-                            <div className="flex flex-nowrap text-[0.9em]">
-                              <div className="">
-                                <span
-                                  className={`rounded px-0.5 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}
-                                >
-                                  {shift.startTime}
-                                </span>
-                                <span className="px-0.5">-</span>
-                              </div>
+                            <div className="flex flex-wrap text-[0.9em] italic">
                               <span
-                                className={`rounded px-0.5 ${shift.endTime === endTimes[day] && "bg-rose-400/50"}`}
+                                className={`rounded px-0.5 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}
                               >
-                                {shift.endTime}
+                                {shift.startTime}
+                              </span>
+                              <span>
+                                <span className="px-0">-</span>
+                                <span
+                                  className={`rounded px-0.5 ${shift.endTime === endTimes[day] && "bg-rose-400/50"}`}
+                                >
+                                  {shift.endTime}
+                                </span>
                               </span>
                             </div>
                           )}
@@ -211,7 +220,7 @@ export function RosterSummary({
                             <BadgeClosing />
                           )}
                         </div>
-                        <div className="flex flex-row flex-wrap gap-1">
+                        <div className="flex flex-row flex-wrap gap-0.5 mt-1">
                           {calculateBreaks(shift.hours).map((b) => (
                             <BreakBadge text={b} />
                           ))}
@@ -280,7 +289,7 @@ export function RosterSummary({
                       {memo.dutySupervisor && (
                         <div className="grid gap-0 bg-slate-300/50 p-1 rounded">
                           <span className="justify-self-start text-xs">
-                            Duty supervisor:
+                            Duty-Sup.:
                           </span>
                           <span className="justify-self-center font-medium">
                             {memo.dutySupervisor}
@@ -313,32 +322,38 @@ export function RosterSummary({
             <tr>
               <td colSpan={8} className="p-1">
                 <div className="underline font-light">Remark</div>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center gap-1">
+                <div className="flex flex-wrap gap-4 text-xs">
+                  <div className="flex flex-row items-center gap-1">
                     <span className="px-1 bg-lime-400/50">Opening</span>
-                  </div>
-                  <div className="flex items-center gap-1">
                     <span className="px-1 bg-rose-400/50">Closing</span>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-1">
-                    <BreakBadge text="PB" />
-                    <span>Paid Break</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <BreakBadge text="MB" /> <span>Meal Break</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <BreakBadge text="PB2" />{" "}
-                    <span>
-                      2<sup>nd</sup> Paid Break
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1">
-                    <BreakBadge text="MB2" />{" "}
-                    <span>
-                      2<sup>nd</sup> Meal Break
-                    </span>
+                  <div className="flex gap-2">
+                    <div className="flex flex-row flex-nowrap items-center gap-0.5">
+                      <BreakBadge text="PB" />
+                      <span>Paid Break</span>
+                    </div>
+                    <div className="flex flex-row flex-nowrap items-center gap-0.5">
+                      <BreakBadge text="MB" />
+                      <span>Meal Break</span>
+                    </div>
+                    <div className="flex flex-row flex-nowrap items-center gap-0.5">
+                      <BreakBadge text="PB2" />
+                      <span>
+                        <span className="text-nowrap">
+                          2<sup>nd</sup>
+                        </span>
+                        <span> Paid Break</span>
+                      </span>
+                    </div>
+                    <div className="flex flex-row flex-nowrap items-center gap-0.5">
+                      <BreakBadge text="MB2" />
+                      <span>
+                        <span className="text-nowrap">
+                          2<sup>nd</sup>
+                        </span>
+                        <span> Meal Break</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </td>

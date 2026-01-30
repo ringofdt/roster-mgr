@@ -535,7 +535,7 @@ export default function RosterApp(): React.JSX.Element {
   };
 
   return (
-    <div className="p-3 max-w-6xl mx-auto text-gray-800">
+    <div className="p-1 max-w-6xl mx-auto text-gray-800">
       <h1 className="text-2xl font-bold mb-4">Roster made simple</h1>
 
       <div className="">

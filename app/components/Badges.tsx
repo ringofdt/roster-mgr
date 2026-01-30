@@ -44,7 +44,7 @@ interface BreakBadgeProps {
 
 export function BreakBadge(props: BreakBadgeProps) {
   return (
-    <div className="text-tiny px-1 text-gray-600 border border-gray-400 rounded">
+    <div className="text-tiny px-0.5 text-gray-600 border border-gray-400 rounded">
       <span>{props.text}</span>
     </div>
   );

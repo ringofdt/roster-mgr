@@ -9,6 +9,10 @@ export type Shift = {
   paidBreak: string;
   mealBreak: string;
   editable: boolean;
+  timePB: string;
+  timeMB: string;
+  timePB2: string;
+  timeMB2: string;
 };
 
 export type Worker = {

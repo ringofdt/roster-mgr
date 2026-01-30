@@ -3,7 +3,13 @@ import { Field, Label, Switch } from "@headlessui/react";
 import { toPng } from "html-to-image";
 import downloadjs from "downloadjs";
 import dayjs from "dayjs";
-import { type Worker, type Day, type DailyMemo, days } from "./types";
+import {
+  type Worker,
+  type Day,
+  type DailyMemo,
+  days,
+  type Shift,
+} from "./types";
 import { BadgeOpening, BadgeClosing, BreakBadge } from "./Badges";
 import {
   CameraIcon,
@@ -39,6 +45,7 @@ export function RosterSummary({
   const rosterRef = useRef<HTMLDivElement>(null);
 
   const [showHours, setShowHours] = useState(false);
+  const [showBreaksInfo, setShowBreaksInfo] = useState(false);
 
   // const startDate = weekDates["Mon"];
   // const endDate = weekDates["Sun"];
@@ -77,6 +84,16 @@ export function RosterSummary({
     <div className="px-1 py-4 text-gray-800 mt-4">
       {/* Export Button */}
       <div className="flex justify-end mb-4 gap-3">
+        <Field className="flex items-center gap-1">
+          <Label>Show Breaks-Info</Label>
+          <Switch
+            checked={showBreaksInfo}
+            onChange={setShowBreaksInfo}
+            className="group inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition data-checked:bg-blue-600"
+          >
+            <span className="size-4 translate-x-1 rounded-full bg-white transition group-data-checked:translate-x-6" />
+          </Switch>
+        </Field>
         <Field className="flex items-center gap-1">
           <Label>Show Hours</Label>
           <Switch
@@ -197,7 +214,7 @@ export function RosterSummary({
                         </div>
                         <div className="flex items-center">
                           {shift.startTime && shift.endTime && (
-                            <div className="flex flex-wrap text-[0.9em] italic">
+                            <div className="flex flex-wrap text-[0.85em]">
                               <span
                                 className={`rounded px-0.5 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}
                               >
@@ -220,11 +237,26 @@ export function RosterSummary({
                             <BadgeClosing />
                           )}
                         </div>
-                        <div className="flex flex-row flex-wrap gap-0.5 mt-1">
-                          {calculateBreaks(shift.hours).map((b) => (
-                            <BreakBadge text={b} />
-                          ))}
-                        </div>
+                        {
+                          <div
+                            className={`flex ${showBreaksInfo ? "flex-col" : "flex-row"} gap-0.5 mt-1`}
+                          >
+                            {calculateBreaks(shift.hours).map((b) => {
+                              if (!showBreaksInfo)
+                                return <BreakBadge text={b} />;
+                              const field = `time${b}` as keyof Shift;
+                              const val = shift[field];
+                              const uiVal = typeof val === "string" ? val : "";
+                              return (
+                                <div className="flex flex-row items-center gap-0.5">
+                                  <BreakBadge text={b} />
+                                  <span className="text-[0.75em]">{uiVal}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        }
+
                         {showHours && (
                           <div className="mt-auto">
                             {shift.startTime && shift.endTime && (

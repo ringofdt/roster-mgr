@@ -297,22 +297,24 @@ export default function RosterApp(): React.JSX.Element {
     setWorkers(updated);
   };
 
-  const updateShift = (
+  const updateShift = <K extends keyof Shift>(
     workerIndex: number,
     day: Day,
-    field: "startTime" | "endTime" | "role" | "paidBreak" | "mealBreak",
-    value: string,
+    field: K,
+    value: Shift[K],
   ) => {
     const updated = [...workers];
-    // if (!updated[workerIndex].shifts[day].editable) return;
-    updated[workerIndex].shifts[day][field] = value;
+
+    const worker = { ...updated[workerIndex] };
+    const shifts = { ...worker.shifts };
+    const shift = { ...shifts[day], [field]: value };
+
     if (["startTime", "endTime"].includes(field)) {
-      const shift = updated[workerIndex].shifts[day];
-      const hrs = calculateHours(shift.startTime, shift.endTime);
-      updated[workerIndex].shifts[day]["hours"] = hrs;
-      // updated[workerIndex].shifts[day]["mealBreak"] = hrs >= 5 ? "MB" : "";
-      // updated[workerIndex].shifts[day]["paidBreak"] = hrs >= 4 ? "PB" : "";
+      shift.hours = calculateHours(shift.startTime, shift.endTime);
     }
+    shifts[day] = shift;
+    worker.shifts = shifts;
+    updated[workerIndex] = worker;
     setWorkers(updated);
   };
 
@@ -344,6 +346,10 @@ export default function RosterApp(): React.JSX.Element {
       paidBreak: "",
       mealBreak: "",
       editable: true,
+      timePB: "",
+      timeMB: "",
+      timePB2: "",
+      timeMB2: "",
     };
     setWorkers(updated);
   };
@@ -361,6 +367,10 @@ export default function RosterApp(): React.JSX.Element {
       paidBreak: "",
       mealBreak: "",
       editable: false,
+      timePB: "",
+      timeMB: "",
+      timePB2: "",
+      timeMB2: "",
     };
     const shifts: Record<Day, Shift> = {} as Record<Day, Shift>;
 
@@ -374,6 +384,10 @@ export default function RosterApp(): React.JSX.Element {
           paidBreak: "",
           mealBreak: "",
           editable: true,
+          timePB: "",
+          timeMB: "",
+          timePB2: "",
+          timeMB2: "",
         };
       } else {
         shifts[d] = { ...disabledShiftData };
@@ -519,6 +533,10 @@ export default function RosterApp(): React.JSX.Element {
         paidBreak: "",
         mealBreak: "",
         editable: false,
+        timePB: "",
+        timeMB: "",
+        timePB2: "",
+        timeMB2: "",
       };
     } else {
       updated[workerIndex].shifts[day] = {
@@ -529,6 +547,10 @@ export default function RosterApp(): React.JSX.Element {
         paidBreak: "",
         mealBreak: "",
         editable: true,
+        timePB: "",
+        timeMB: "",
+        timePB2: "",
+        timeMB2: "",
       };
     }
     setWorkers(updated);
@@ -991,7 +1013,7 @@ export default function RosterApp(): React.JSX.Element {
                         style={{ height: "80px" }}
                       >
                         <div className="h-full flex flex-col">
-                          <div className="flex-1">
+                          <div className="flex-1 text-[0.9em]">
                             <div className="grid gap-1">
                               {/* Role Selector */}
                               <div className="flex gap-1">
@@ -1017,11 +1039,6 @@ export default function RosterApp(): React.JSX.Element {
                               </div>
                               {/* Start Shift Selector */}
                               <div className="flex gap-1">
-                                <div className="w-4 h-4 flex-shrink-0">
-                                  {shift.startTime === startTimes[day] && (
-                                    <BadgeOpening />
-                                  )}
-                                </div>
                                 <Select
                                   value={shift.startTime}
                                   onChange={(e) =>
@@ -1032,7 +1049,7 @@ export default function RosterApp(): React.JSX.Element {
                                       e.target.value,
                                     )
                                   }
-                                  className="w-full px-0 border-b border-gray-300"
+                                  className={`w-full px-0 rounded border-b border-gray-300 ${shift.startTime === startTimes[day] && "bg-lime-400/50"}`}
                                 >
                                   <option value=""></option>
                                   {generateDayTimeOptions(
@@ -1048,11 +1065,6 @@ export default function RosterApp(): React.JSX.Element {
                               </div>
                               {/* End Shift Selector */}
                               <div className="flex gap-1">
-                                <div className="w-4 h-4 flex-shrink-0">
-                                  {shift.endTime === endTimes[day] && (
-                                    <BadgeClosing />
-                                  )}
-                                </div>
                                 <Select
                                   value={shift.endTime}
                                   onChange={(e) =>
@@ -1063,7 +1075,7 @@ export default function RosterApp(): React.JSX.Element {
                                       e.target.value,
                                     )
                                   }
-                                  className="w-full px-0 border-b border-gray-300"
+                                  className={`w-full px-0 rounded border-b border-gray-300 ${shift.endTime === endTimes[day] && "bg-rose-400/50"}`}
                                 >
                                   <option value=""></option>
                                   {generateDayTimeOptions(
@@ -1077,10 +1089,35 @@ export default function RosterApp(): React.JSX.Element {
                                   ))}
                                 </Select>
                               </div>
-                              <div className="flex gap-0.5 items-center">
-                                {calculateBreaks(shift.hours).map((b) => (
-                                  <BreakBadge text={b} />
-                                ))}
+                              <div className="flex flex-col gap-0.5 items-center">
+                                {calculateBreaks(shift.hours).map((b) => {
+                                  const field = `time${b}` as keyof Shift;
+                                  const val = shift[field];
+                                  const uiVal =
+                                    typeof val === "string" ? val : "";
+                                  return (
+                                    <div
+                                      key={field}
+                                      className="flex flex-row items-center"
+                                    >
+                                      <BreakBadge text={b} />
+                                      <input
+                                        type="text"
+                                        value={uiVal}
+                                        onChange={(e) =>
+                                          updateShift(
+                                            widx,
+                                            day,
+                                            field,
+                                            e.target.value,
+                                          )
+                                        }
+                                        className="border-b border-gray-300 px-1 w-full font-light focus:outline-0"
+                                        placeholder=""
+                                      />
+                                    </div>
+                                  );
+                                })}
                               </div>
                               <div>
                                 {false && shift.hours >= 4 && (
